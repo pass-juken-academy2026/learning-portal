@@ -1,0 +1,47 @@
+name: Validate static site
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate HTML and inline JavaScript
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import subprocess, sys, tempfile
+          class Audit(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.ids=[]; self.scripts=[]; self.active=False; self.buf=[]
+              def handle_starttag(self, tag, attrs):
+                  a=dict(attrs)
+                  if 'id' in a: self.ids.append(a['id'])
+                  if tag=='script': self.active=True; self.buf=[]
+              def handle_data(self, data):
+                  if self.active: self.buf.append(data)
+              def handle_endtag(self, tag):
+                  if tag=='script' and self.active: self.scripts.append(''.join(self.buf)); self.active=False
+          files=list(Path('.').rglob('*.html')); failed=False
+          if not files: sys.exit('No HTML files found')
+          for f in files:
+              a=Audit(); a.feed(f.read_text(encoding='utf-8'))
+              dup=sorted({i for i in a.ids if a.ids.count(i)>1})
+              if dup: print(f'Duplicate IDs in {f}: {dup}'); failed=True
+              for n,js in enumerate(a.scripts):
+                  if not js.strip(): continue
+                  p=Path(tempfile.gettempdir())/f'inline-{abs(hash((str(f),n)))}.js'; p.write_text(js,encoding='utf-8')
+                  r=subprocess.run(['node','--check',str(p)],capture_output=True,text=True)
+                  if r.returncode: print(f'JS syntax error in {f}, script {n+1}:\n{r.stderr}'); failed=True
+              print(f'Checked {f}: {len(a.scripts)} scripts')
+          if failed: sys.exit(1)
+          PY
