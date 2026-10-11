@@ -82,7 +82,7 @@ LearningPortal の表示名「高校理科」への変更は別PRで main に反
 | 高校社会 | 3 | 1919・1945・1956年の日本／中国／欧州／中東の同時代比較 | [PR #10](https://github.com/pass-juken-academy2026/highschool-social-studies/pull/10) |
 | 高校情報I | 12 | 著作者人格権、生体認証、アフォーダンス、フィードバック、量子化誤差、ランレングス圧縮、ポート番号、帯域幅、標準得点、散布図、再帰、スタック | [PR #16](https://github.com/pass-juken-academy2026/highschool-information/pull/16) |
 
-第2次追加は合計37項目。5件すべてのPRで `Validate static site` が成功した後に squash merge 済み。演習問題配列・出題ロジック・レイアウトはこの追加では変更していない。
+第2次追加は合計37項目。5件すべての内容追加PRで `Validate static site` が成功した後に squash merge 済み。世界史年表の年代順整列も別PRで検証成功後に反映済み。演習問題配列・出題ロジック・レイアウトはこの追加では変更していない。
 
 ## 保護ルール
 
@@ -97,7 +97,7 @@ LearningPortal の表示名「高校理科」への変更は別PRで main に反
 - 高校国語: 用語150件で、科目内の正規化済み完全一致重複なし。既存の演習用 `db` は main と一致。
 - 高校数学: 公式・定理62件。名前の重複なし。全カテゴリが表示単元と一致。`practice.html` は変更せず、演習データ・出題ロジックを維持。
 - 高校理科: 20単元に重要事項195件。単元内・単元間の項目名重複なし。既存の問題配列は main と一致。ページ内表示名は「高校理科」に統一。
-- 高校社会: 人物／用語・条約／法律・年表の配列形式を検査。既存の世界史年表に年代順の不整列が見つかったため、修正PR #11で整列を追加対応。既存6トラックの問題配列は main と一致。
+- 高校社会: 人物／用語・条約／法律・年表の配列形式を検査。世界史年表は第2次追加後に年代順へ整列済み（[修正PR #11](https://github.com/pass-juken-academy2026/highschool-social-studies/pull/11)）。既存6トラックの問題配列は main と一致。
 - 高校情報I: 6分野・88語の用語集を表示。現在のDBは20問、別問題バンクは6問。用語集PRは当時のDB9問を変更していないが、その後の別コミットでDBが9問から20問へ増えている（[該当コミット](https://github.com/pass-juken-academy2026/highschool-information/commit/7e07f8f6c17196388a16e07d04e3dc86ab3f0553)）。この問題追加の内容・理由は知識データ拡充とは別に検証が必要。
 - GitHub Actions の HTML／インライン JavaScript 構文チェックをPRごとに実行。最終コミットの結果は各PRのChecksで確認する。
 
