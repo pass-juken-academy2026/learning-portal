@@ -1,6 +1,6 @@
 # 高校関連コンテンツ 知識データ監査メモ
 
-更新日: 2026-10-10
+更新日: 2026-10-11
 
 ## 対象範囲
 
@@ -142,11 +142,24 @@ LearningPortal の表示名「高校理科」への変更は別PRで main に反
 
 | 対象 | 追加・修正 | 検証対象 |
 |---|---|---|
-| 高校国語 | 用語配列の区切り漏れを修正。これにより第2次追加の「枕詞」が正しく配列要素として認識される。 | 用語配列の構文と完全一致ラベルを再確認。追加用語の書き込みは今回の安全性チェックでブロックされたため実施していない。 |
+| 高校国語 | 用語配列の区切り漏れを修正。これにより第2次追加の「枕詞」が正しく配列要素として認識される。 | 用語配列の構文と完全一致ラベルを再確認。追加用語は今回は含めず、配列区切りの修正を優先した。 |
 | 高校数学 | 公式6項目を追加し、カタログは68項目。 | 単元＋公式名の重複を検査。既存の演習ページには変更なし。 |
 | 高校理科 | 生態系の重要事項4項目（ニッチ、種間競争、相利共生、キーストーン種）を追加し、重要事項は199件。 | 追加ラベルの重複を確認。既存の問題配列には変更なし。 |
 | 高校社会 | 地理の用語4項目（人口ボーナス、乾燥農業、ASEAN、欧州連合）を追加。 | 追加ラベルの重複を確認。既存の問題配列には変更なし。 |
 | 高校情報I | 用語5項目（多要素認証、フィッシング詐欺、ランサムウェア、プロキシサーバ、VPN）を追加し、用語集は93語。 | 既存ラベルとの重複を確認。既存の問題バンクには変更なし。 |
-| LearningPortal | キーボードフォーカス表示、カードのホバー状態、スマートフォン表示の余白・1列表示、動きを減らす設定への対応を追加。 | レイアウトCSSのみ変更。中学コンテンツのデータは変更なし。 |
+| LearningPortal・高校5科目ページ | キーボードフォーカス表示、スマートフォン表示の余白、カード状態、動きを減らす設定への対応を追加。 | レイアウトCSSのみ変更。中学・英語の知識／演習データは変更なし。 |
 
 第3次の知識追加は合計19項目（数学6、理科4、社会4、情報I 5）。国語は追加データの反映ではなく、配列区切りの不具合修正を実施した。今回の変更も、構文・重複・既存問題データへの影響をPRごとに検証する。
+
+
+### 第3次変更の検証・反映記録
+
+- 高校国語：用語配列の区切り漏れを修正し、後続の「枕詞」が配列項目として扱われるようにした（[修正PR #12](https://github.com/pass-juken-academy2026/highschool-japanese/pull/12)）。
+- 高校数学：公式6項目を追加（[PR #15](https://github.com/pass-juken-academy2026/highschool-math/pull/15)）。
+- 高校理科：生態系の重要事項4項目を追加（[PR #13](https://github.com/pass-juken-academy2026/highschool-biology/pull/13)）。
+- 高校社会：地理用語4項目を追加（[PR #12](https://github.com/pass-juken-academy2026/highschool-social-studies/pull/12)）。
+- 高校情報I：用語5項目を追加（[PR #17](https://github.com/pass-juken-academy2026/highschool-information/pull/17)）。
+- LearningPortal：監査記録とトップページの視認性・操作性を改善（[PR #10](https://github.com/pass-juken-academy2026/learning-portal/pull/10)）。
+- 高校5科目ページのレスポンシブ・アクセシビリティ調整：国語（[PR #13](https://github.com/pass-juken-academy2026/highschool-japanese/pull/13)）、数学（[PR #16](https://github.com/pass-juken-academy2026/highschool-math/pull/16)）、理科（[PR #14](https://github.com/pass-juken-academy2026/highschool-biology/pull/14)）、社会（[PR #13](https://github.com/pass-juken-academy2026/highschool-social-studies/pull/13)）、情報I（[PR #18](https://github.com/pass-juken-academy2026/highschool-information/pull/18)）。
+
+数学・理科・社会・情報Iの知識追加PR、およびLearningPortalと高校5科目ページのレイアウトPRは、GitHub Actionsの Validate static site が成功した後に main へ反映済み。国語の区切り修正後も、修正を含むmainを基点にしたレイアウトPRの検証が成功した。検証はHTML／インラインJavaScriptの構文と重複IDを対象とし、実機での視覚的な全画面確認を意味するものではない。
