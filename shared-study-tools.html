@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#071426">
+<title>共通学習ツール｜PASS JUKEN ACADEMY</title>
+<style>
+:root{color-scheme:dark;--bg:#071426;--panel:#10233d;--line:#294563;--text:#edf5ff;--muted:#c3d5e9;--accent:#7bdcff;--button:#17658b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top right,#14345a 0,transparent 48%),var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,sans-serif}
+header,main,footer{max-width:1080px;margin:auto;padding:20px}h1{font-size:clamp(1.7rem,5vw,2.6rem);line-height:1.2;margin:.35em 0}h2{font-size:1.25rem;margin-top:0}h3{font-size:1.05rem}p,.muted,small{color:var(--muted)}a{color:var(--accent)}.tag{color:var(--accent);font-size:.85rem;font-weight:700;letter-spacing:.04em}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}button,input,select,textarea{font:inherit;max-width:100%;border-radius:10px}button{min-height:44px;padding:9px 14px;border:1px solid #438bb0;background:var(--button);color:white;cursor:pointer;touch-action:manipulation}button.secondary{background:#10233d;border-color:#45617f}button.danger{background:#692f3b;border-color:#a95b68}button:disabled{opacity:.55;cursor:not-allowed}input,select,textarea{width:100%;min-width:0;padding:10px 12px;border:1px solid #355575;background:#091a2e;color:var(--text)}textarea{resize:vertical}label{display:block;font-weight:650;margin:10px 0 5px}.panel,.card{background:#10233d;border:1px solid var(--line);border-radius:16px;padding:17px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row>*{flex:1}.row button{flex:0 0 auto}.tab[aria-selected=true]{background:#1a789d;border-color:#8bdfff;box-shadow:0 0 0 2px #8bdfff25}.view[hidden]{display:none!important}.stat{font-size:1.5rem;font-weight:800}.pill{display:inline-block;border:1px solid #45617f;border-radius:999px;padding:2px 9px;font-size:.82rem;color:var(--muted)}.item{padding:12px 0;border-top:1px solid var(--line)}.item:first-child{border-top:0}.progress{height:8px;background:#263d58;border-radius:9px;overflow:hidden}.progress span{display:block;height:100%;background:#65c9f1;width:0}.notice{padding:12px;border:1px solid #45617f;border-radius:10px;background:#091a2e}.stage{border-left:3px solid #65c9f1;padding:8px 12px;margin:10px 0}.stage h3{margin:0 0 5px}.empty{padding:14px;border:1px dashed #45617f;border-radius:10px;color:var(--muted)}.timer{font-size:clamp(2rem,9vw,4rem);font-variant-numeric:tabular-nums;font-weight:800;text-align:center;margin:16px 0}.checkrow{display:flex;gap:8px;align-items:center}.checkrow input{width:auto}footer{text-align:center;color:var(--muted);font-size:.9rem}
+:focus-visible{outline:3px solid #7bdcff;outline-offset:3px}@media(max-width:600px){header,main,footer{padding:15px}.panel,.card{padding:13px}nav button{flex:1 1 42%}.row>*{flex-basis:100%}.row button{flex:1 1 auto}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+ <p class="tag">PASS JUKEN ACADEMY · SHARED LEARNING TOOLS</p>
+ <h1>全教科共通の学習ツール</h1>
+ <p>計画・復習・弱点分析・時間管理・段階的な解説を、ひとつの画面で管理します。</p>
+ <div class="notice">保存データはこのブラウザ内に保存されます。別の端末やブラウザとは自動同期されません。共有端末では個人情報を書き込まないでください。</div>
+ <nav role="tablist" aria-label="学習ツール">
+  <button class="tab" role="tab" id="tab-plan" aria-controls="view-plan" aria-selected="true" data-view="plan">学習計画</button>
+  <button class="tab" role="tab" id="tab-review" aria-controls="view-review" aria-selected="false" data-view="review">復習管理</button>
+  <button class="tab" role="tab" id="tab-weak" aria-controls="view-weak" aria-selected="false" data-view="weak">弱点分析</button>
+  <button class="tab" role="tab" id="tab-exam" aria-controls="view-exam" aria-selected="false" data-view="exam">模試・時間</button>
+  <button class="tab" role="tab" id="tab-explain" aria-controls="view-explain" aria-selected="false" data-view="explain">3段階解説</button>
+ </nav>
+</header>
+<main>
+<section class="view" id="view-plan" role="tabpanel" aria-labelledby="tab-plan">
+ <div class="panel"><h2>自分に合わせた学習計画</h2><p>目標日と使える時間、優先科目を入力すると、時間配分のたたき台を作ります。</p>
+ <div class="grid"><div><label for="goal">目標・試験名</label><input id="goal" maxlength="100" placeholder="例：定期テスト、大学入試"></div><div><label for="deadline">目標日</label><input id="deadline" type="date"></div><div><label for="minutes">1日に使える時間（分）</label><input id="minutes" type="number" min="10" max="720" value="120"></div><div><label for="days">1週間の勉強日数</label><select id="days"><option value="3">3日</option><option value="4">4日</option><option value="5" selected>5日</option><option value="6">6日</option><option value="7">7日</option></select></div></div>
+ <label>優先して勉強する科目（複数選択可）</label><div class="grid" id="subject-checks">
+ <label class="checkrow"><input type="checkbox" value="高校国語" checked>高校国語</label><label class="checkrow"><input type="checkbox" value="英語" checked>英語</label><label class="checkrow"><input type="checkbox" value="数学" checked>数学</label><label class="checkrow"><input type="checkbox" value="理科" >理科</label><label class="checkrow"><input type="checkbox" value="地理・歴史" >地理・歴史</label><label class="checkrow"><input type="checkbox" value="公民" >公民</label><label class="checkrow"><input type="checkbox" value="情報I" >情報I</label>
+ </div><div class="row" style="margin-top:14px"><button id="make-plan">計画を作る</button><button id="save-plan" class="secondary">計画を保存</button></div><div id="plan-output" aria-live="polite" style="margin-top:14px"><div class="empty">条件を入力して「計画を作る」を押してください。</div></div></div>
+</section>
+<section class="view" id="view-review" role="tabpanel" aria-labelledby="tab-review" hidden>
+ <div class="panel"><h2>忘れる前に復習</h2><p>覚えたい内容を登録し、復習結果に応じて次の復習日を設定します。間隔は目安です。</p>
+ <div class="grid"><div><label for="review-subject">科目</label><select id="review-subject"><option>高校国語</option><option>英語</option><option>数学</option><option>理科</option><option>地理・歴史</option><option>公民</option><option>情報I</option><option>その他</option></select></div><div><label for="review-topic">単元・覚えたい内容</label><input id="review-topic" maxlength="180" placeholder="例：古文の助動詞「む」"></div></div><button id="add-review" style="margin-top:12px">復習リストに追加</button></div>
+ <div class="panel"><div class="row"><h2>復習リスト</h2><span id="review-count" class="pill">0件</span></div><div id="review-list"><div class="empty">まだ登録がありません。</div></div></div>
+</section>
+<section class="view" id="view-weak" role="tabpanel" aria-labelledby="tab-weak" hidden>
+ <div class="panel"><h2>間違いを弱点データに変える</h2><p>正誤だけで終わらせず、原因を記録します。記録が増えるほど、見直すべき傾向が分かります。</p>
+ <div class="grid"><div><label for="weak-subject">科目</label><select id="weak-subject"><option>高校国語</option><option>英語</option><option>数学</option><option>理科</option><option>地理・歴史</option><option>公民</option><option>情報I</option><option>その他</option></select></div><div><label for="weak-topic">単元・問題</label><input id="weak-topic" maxlength="180" placeholder="例：二次関数の最大・最小"></div><div><label for="weak-cause">主な原因</label><select id="weak-cause"><option>知識不足</option><option>解き方・手順が不明</option><option>問題文の読み違い</option><option>計算・書き間違い</option><option>時間不足</option><option>覚えていたが思い出せない</option><option>その他</option></select></div><div><label for="weak-note">次回の対策</label><input id="weak-note" maxlength="240" placeholder="例：条件を図に書き出してから解く"></div></div><button id="add-weak" style="margin-top:12px">間違いを記録</button></div>
+ <div class="panel"><h2>弱点サマリー</h2><div id="weak-summary" class="grid"></div><h3>記録一覧</h3><div id="weak-list"><div class="empty">まだ記録がありません。</div></div></div>
+</section>
+<section class="view" id="view-exam" role="tabpanel" aria-labelledby="tab-exam" hidden>
+ <div class="panel"><h2>模試モード・時間管理</h2><p>本番を想定して制限時間と問題数を決めます。このタイマーはブラウザ内で動作します。</p>
+ <div class="grid"><div><label for="exam-name">模試・演習名</label><input id="exam-name" maxlength="100" placeholder="例：英語 長文演習"></div><div><label for="exam-minutes">制限時間（分）</label><input id="exam-minutes" type="number" min="1" max="600" value="60"></div><div><label for="exam-questions">問題数</label><input id="exam-questions" type="number" min="1" max="300" value="30"></div></div>
+ <div class="timer" id="timer" aria-live="off">60:00</div><p id="timer-status" class="muted" aria-live="polite">準備完了。開始するとカウントダウンします。</p><div class="row"><button id="timer-start">開始</button><button id="timer-pause" class="secondary" disabled>一時停止</button><button id="timer-reset" class="secondary">リセット</button></div>
+ <div class="grid" style="margin-top:16px"><div class="card"><label for="exam-done">解いた問題数</label><input id="exam-done" type="number" min="0" value="0"></div><div class="card"><label for="exam-correct">正解数（終了後）</label><input id="exam-correct" type="number" min="0" value="0"></div></div><button id="save-exam" style="margin-top:10px">結果を記録</button><div id="exam-history" style="margin-top:12px"></div></div>
+</section>
+<section class="view" id="view-explain" role="tabpanel" aria-labelledby="tab-explain" hidden>
+ <div class="panel"><h2>ヒント → 考え方 → 詳しい解説</h2><p>問題ごとに解説を3段階で整理して保存できます。まずヒントだけを見て、自力で考えてから次へ進みます。</p>
+ <label for="ex-topic">科目・問題名</label><input id="ex-topic" maxlength="180" placeholder="例：現代文の指示語問題">
+ <div class="stage"><h3>STEP 1｜ヒント</h3><p>答えを直接言わず、最初に注目する点を書く。</p><textarea id="ex-hint" rows="2" maxlength="1500" placeholder="例：指示語の直前だけでなく、少し前まで戻ってみよう。"></textarea></div>
+ <div class="stage"><h3>STEP 2｜考え方</h3><p>解くための手順や、使うルールを書く。</p><textarea id="ex-thinking" rows="3" maxlength="2500" placeholder="例：指示語が指す候補を本文から抜き出し、文脈に合うか確認する。"></textarea></div>
+ <div class="stage"><h3>STEP 3｜詳しい解説</h3><p>根拠・途中式・なぜ他の答えではないかを説明する。</p><textarea id="ex-detail" rows="4" maxlength="4000" placeholder="本文の根拠、考え方、正解に至る理由を記入。"></textarea></div>
+ <div class="row"><button id="save-explain">解説を保存</button><button id="clear-explain" class="secondary">入力をクリア</button></div></div>
+ <div class="panel"><h2>保存した解説</h2><div id="ex-list"><div class="empty">まだ保存された解説がありません。</div></div></div>
+</section>
+<section class="panel"><h2>データ管理</h2><p>端末変更やバックアップに備えて、登録した学習データをJSONファイルとして書き出し・読み込みできます。</p><div class="row"><button id="export-data">データを書き出す</button><label for="import-data" class="checkrow" style="margin:0"><input id="import-data" type="file" accept=".json,application/json">バックアップを読み込む</label><button id="clear-data" class="danger">全データを削除</button></div><p id="data-status" class="muted" aria-live="polite"></p></section>
+</main>
+<footer>PASS JUKEN ACADEMY · 共通学習ツール</footer>
+<script>
+(()=> {
+const KEY="passJukenSharedToolsV1";
+const blank=()=>({plan:null,reviews:[],mistakes:[],explanations:[],exams:[]});
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||"null");return x&&typeof x==="object"?{...blank(),...x}:blank()}catch(e){return blank()}}
+let data=load(),planDraft=null,remaining=3600,totalSeconds=3600,timerId=null,running=false;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const addDays=(date,n)=>{const d=new Date(date+"T12:00:00");d.setDate(d.getDate()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data));$("data-status").textContent="保存しました。"}catch(e){$("data-status").textContent="保存できませんでした。ブラウザの空き容量やプライベートモード設定を確認してください。"}}
+function setView(name){document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.view===name)));document.querySelectorAll(".view").forEach(v=>v.hidden=v.id!=="view-"+name)}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
+function renderPlan(){const p=data.plan;if(!p){$("plan-output").innerHTML='<div class="empty">まだ保存された計画はありません。</div>';return}$("plan-output").innerHTML='<div class="notice"><strong>'+esc(p.goal||"学習計画")+'</strong><p>目標日：'+esc(p.deadline||"未設定")+'／1日 '+p.minutes+' 分／週 '+p.days+' 日</p>'+p.allocations.map(a=>'<div class="item"><div class="row"><strong>'+esc(a.subject)+'</strong><span>'+a.minutes+'分／日</span></div><div class="progress"><span style="width:'+a.percent+'%"></span></div></div>').join("")+'<p>この計画は配分の目安です。学校の課題や疲労に合わせて調整してください。</p></div>'}
+$("make-plan").addEventListener("click",()=>{const mins=Number($("minutes").value),days=Number($("days").value),selected=[...$("subject-checks").querySelectorAll("input:checked")].map(x=>x.value);if(!Number.isFinite(mins)||mins<10||mins>720){alert("1日の勉強時間は10〜720分で入力してください。");return}if(!selected.length){alert("優先科目を1つ以上選んでください。");return}const weights=selected.map((s,i)=>({subject:s,weight:i===0?1.4:1}));const sum=weights.reduce((n,x)=>n+x.weight,0);planDraft={goal:$("goal").value.trim(),deadline:$("deadline").value,minutes:mins,days,subjects:selected,allocations:weights.map(x=>({subject:x.subject,minutes:Math.max(5,Math.round(mins*x.weight/sum/5)*5),percent:Math.round(x.weight/sum*100)})),weeklyMinutes:mins*days};$("plan-output").innerHTML='<div class="notice"><strong>計画案</strong><p>'+esc(planDraft.goal||"学習目標")+'｜週あたり約'+planDraft.weeklyMinutes+'分</p>'+planDraft.allocations.map(a=>'<div class="item"><div class="row"><strong>'+esc(a.subject)+'</strong><span>'+a.minutes+'分／日</span></div><div class="progress"><span style="width:'+a.percent+'%"></span></div></div>').join("")+'<p>最初に取り組む科目を少し厚めに配分した案です。実際の得意・不得意に合わせて調整してください。</p></div>'});
+$("save-plan").addEventListener("click",()=>{if(!planDraft){alert("先に「計画を作る」を押してください。");return}data.plan=planDraft;save();renderPlan()});
+function renderReviews(){const list=$("review-list"),items=[...data.reviews].sort((a,b)=>a.due.localeCompare(b.due));$("review-count").textContent=items.length+"件";if(!items.length){list.innerHTML='<div class="empty">まだ登録がありません。</div>';return}list.innerHTML=items.map(x=>'<div class="item"><div class="row"><strong>'+esc(x.topic)+'</strong><span class="pill">'+esc(x.subject)+'</span></div><p>次の復習：<strong>'+esc(x.due)+'</strong> '+(x.due<=today()?'<span class="pill">今日まで</span>':"")+'／復習回数 '+x.stage+'</p><div class="row"><button data-review="'+x.id+'" data-result="easy">できた</button><button class="secondary" data-review="'+x.id+'" data-result="hard">もう一度</button><button class="danger" data-delete-review="'+x.id+'">削除</button></div></div>').join("")}
+$("add-review").addEventListener("click",()=>{const topic=$("review-topic").value.trim();if(!topic){alert("復習する内容を入力してください。");return}data.reviews.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),subject:$("review-subject").value,topic,due:today(),stage:0,created:today()});$("review-topic").value="";save();renderReviews()});
+$("review-list").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.review){const x=data.reviews.find(v=>v.id===b.dataset.review);if(!x)return;if(b.dataset.result==="easy"){const intervals=[1,3,7,14,30];x.stage=Math.min(x.stage+1,intervals.length-1);x.due=addDays(today(),intervals[x.stage])}else{x.stage=0;x.due=addDays(today(),1)}save();renderReviews()}if(b.dataset.deleteReview){data.reviews=data.reviews.filter(v=>v.id!==b.dataset.deleteReview);save();renderReviews()}});
+function renderWeak(){const sum={};data.mistakes.forEach(m=>sum[m.cause]=(sum[m.cause]||0)+1);const entries=Object.entries(sum).sort((a,b)=>b[1]-a[1]);$("weak-summary").innerHTML=entries.length?entries.map(([cause,n])=>'<div class="card"><div class="stat">'+n+'</div><strong>'+esc(cause)+'</strong><div class="progress"><span style="width:'+Math.round(n/data.mistakes.length*100)+'%"></span></div></div>').join(""):'<div class="empty">記録が増えると、原因別の傾向を表示します。</div>';const list=$("weak-list");list.innerHTML=data.mistakes.length?[...data.mistakes].reverse().map(m=>'<div class="item"><div class="row"><strong>'+esc(m.topic)+'</strong><span class="pill">'+esc(m.subject)+'</span></div><p>原因：'+esc(m.cause)+'</p><p>次回の対策：'+esc(m.note||"未設定")+'</p><small>'+esc(m.date)+'</small> <button class="danger" data-delete-mistake="'+m.id+'">削除</button></div>').join(""):'<div class="empty">まだ記録がありません。</div>'}
+$("add-weak").addEventListener("click",()=>{const topic=$("weak-topic").value.trim();if(!topic){alert("単元・問題を入力してください。");return}data.mistakes.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),subject:$("weak-subject").value,topic,cause:$("weak-cause").value,note:$("weak-note").value.trim(),date:today()});$("weak-topic").value="";$("weak-note").value="";save();renderWeak()});
+$("weak-list").addEventListener("click",e=>{const b=e.target.closest("[data-delete-mistake]");if(!b)return;data.mistakes=data.mistakes.filter(m=>m.id!==b.dataset.deleteMistake);save();renderWeak()});
+function formatTime(s){s=Math.max(0,Math.floor(s));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function showTimer(){$("timer").textContent=formatTime(remaining)}
+function stopTimer(){if(timerId!==null)clearInterval(timerId);timerId=null;running=false;$("timer-start").disabled=false;$("timer-pause").disabled=true}
+function resetTimer(){stopTimer();const m=Number($("exam-minutes").value);totalSeconds=Math.max(60,Math.min(36000,Math.floor((Number.isFinite(m)?m:60)*60)));remaining=totalSeconds;showTimer();$("timer-status").textContent="準備完了。開始するとカウントダウンします。"}
+$("exam-minutes").addEventListener("change",()=>{if(!running)resetTimer()});
+$("timer-start").addEventListener("click",()=>{if(running)return;if(remaining<=0)resetTimer();running=true;$("timer-start").disabled=true;$("timer-pause").disabled=false;$("timer-status").textContent="計測中。問題数と残り時間を意識しよう。";timerId=setInterval(()=>{remaining--;showTimer();if(remaining<=0){stopTimer();$("timer-status").textContent="時間終了！記録欄を入力して結果を保存できます。";if("vibrate" in navigator)navigator.vibrate(150)}},1000)});
+$("timer-pause").addEventListener("click",()=>{stopTimer();$("timer-status").textContent="一時停止中。開始を押すと続きから再開します。"});
+$("timer-reset").addEventListener("click",resetTimer);
+function renderExams(){$("exam-history").innerHTML=data.exams.length?'<h3>過去の記録</h3>'+[...data.exams].reverse().map(x=>'<div class="item"><strong>'+esc(x.name)+'</strong><p>'+esc(x.date)+'｜'+x.minutes+'分・'+x.questions+'問｜解答 '+x.done+'問／正解 '+x.correct+'問'+(x.done? '（正答率 '+Math.round(x.correct/x.done*100)+'%）':"")+'</p></div>').join(""):'<div class="empty">まだ記録がありません。</div>'}
+$("save-exam").addEventListener("click",()=>{const questions=Number($("exam-questions").value),done=Number($("exam-done").value),correct=Number($("exam-correct").value);if(!Number.isInteger(questions)||questions<1||questions>300||!Number.isInteger(done)||done<0||done>questions||!Number.isInteger(correct)||correct<0||correct>done){alert("問題数・解答数・正解数を確認してください。正解数は解答数以下にしてください。");return}data.exams.push({name:$("exam-name").value.trim()||"演習",date:today(),minutes:Number($("exam-minutes").value)||60,questions,done,correct});save();renderExams()});
+function renderExplanations(){const list=$("ex-list");list.innerHTML=data.explanations.length?[...data.explanations].reverse().map(x=>'<div class="item"><div class="row"><strong>'+esc(x.topic)+'</strong><button class="danger" data-delete-ex="'+x.id+'">削除</button></div><details><summary>STEP 1｜ヒントを見る</summary><p>'+esc(x.hint||"未入力").replace(/\n/g,"<br>")+'</p></details><details><summary>STEP 2｜考え方を見る</summary><p>'+esc(x.thinking||"未入力").replace(/\n/g,"<br>")+'</p></details><details><summary>STEP 3｜詳しい解説を見る</summary><p>'+esc(x.detail||"未入力").replace(/\n/g,"<br>")+'</p></details></div>').join(""):'<div class="empty">まだ保存された解説がありません。</div>'}
+$("save-explain").addEventListener("click",()=>{const topic=$("ex-topic").value.trim();if(!topic){alert("科目・問題名を入力してください。");return}if(!$("ex-hint").value.trim()&&!$("ex-thinking").value.trim()&&!$("ex-detail").value.trim()){alert("少なくとも1段階の解説を入力してください。");return}data.explanations.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),topic,hint:$("ex-hint").value.trim(),thinking:$("ex-thinking").value.trim(),detail:$("ex-detail").value.trim(),date:today()});save();renderExplanations();["ex-topic","ex-hint","ex-thinking","ex-detail"].forEach(id=>$(id).value="")});
+$("clear-explain").addEventListener("click",()=>["ex-topic","ex-hint","ex-thinking","ex-detail"].forEach(id=>$(id).value=""));
+$("ex-list").addEventListener("click",e=>{const b=e.target.closest("[data-delete-ex]");if(!b)return;data.explanations=data.explanations.filter(x=>x.id!==b.dataset.deleteEx);save();renderExplanations()});
+$("export-data").addEventListener("click",()=>{const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),data},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="pass-juken-study-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);$("data-status").textContent="バックアップを書き出しました。"});
+$("import-data").addEventListener("change",async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;try{const obj=JSON.parse(await f.text()),incoming=obj.data||obj;if(!incoming||!Array.isArray(incoming.reviews)||!Array.isArray(incoming.mistakes)||!Array.isArray(incoming.explanations)||!Array.isArray(incoming.exams))throw new Error("形式");if(!confirm("現在のデータをバックアップの内容で置き換えます。よろしいですか？"))return;data={...blank(),...incoming};save();renderAll();$("data-status").textContent="バックアップを読み込みました。"}catch(err){alert("読み込めませんでした。有効な学習ツールのバックアップJSONを選んでください。")}finally{e.target.value=""}});
+$("clear-data").addEventListener("click",()=>{if(!confirm("保存した計画・復習・弱点・模試・解説をすべて削除します。この操作は取り消せません。"))return;data=blank();save();renderAll();$("data-status").textContent="全データを削除しました。"});
+function renderAll(){renderPlan();renderReviews();renderWeak();renderExams();renderExplanations()}
+resetTimer();renderAll();
+})();
+</script>
+</body>
+</html>
