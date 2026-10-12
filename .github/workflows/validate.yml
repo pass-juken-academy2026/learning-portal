@@ -45,3 +45,41 @@ jobs:
               print(f'Checked {f}: {len(a.scripts)} scripts')
           if failed: sys.exit(1)
           PY
+      - name: Check Stage 1 shared-feature coverage
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import sys
+          page = Path("shared-study-tools.html")
+          if not page.exists():
+              sys.exit("Missing shared-study-tools.html")
+          html = page.read_text(encoding="utf-8")
+          required_views = {
+              "study plan": 'id="view-plan"',
+              "review schedule": 'id="view-review"',
+              "weakness analysis": 'id="view-weak"',
+              "mistake notebook": 'id="view-notebook"',
+              "study history and grades": 'id="view-history"',
+              "mock exam and timer": 'id="view-exam"',
+              "three-stage explanations": 'id="view-explain"',
+          }
+          missing = [name for name, marker in required_views.items() if marker not in html]
+          required_behaviors = [
+              'localStorage.setItem(KEY,JSON.stringify(data))',
+              'id="export-data"',
+              'id="import-data"',
+              'id="clear-data"',
+              'function renderAll()',
+              'aria-selected',
+              'aria-live="polite"',
+          ]
+          missing += [f"behavior: {marker}" for marker in required_behaviors if marker not in html]
+          if missing:
+              print("Stage 1 coverage missing:")
+              print("\\n".join(missing))
+              sys.exit(1)
+          tabs = html.count('class="tab"')
+          if tabs != 7:
+              sys.exit(f"Expected 7 shared-tool tabs, found {tabs}")
+          print("Stage 1 static coverage passed: all 7 tool views, persistence, backup, reset, and accessibility hooks.")
+          PY
