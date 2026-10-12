@@ -76,7 +76,7 @@ jobs:
           missing += [f"behavior: {marker}" for marker in required_behaviors if marker not in html]
           if missing:
               print("Stage 1 coverage missing:")
-              print("\\n".join(missing))
+              print("\n".join(missing))
               sys.exit(1)
           tabs = html.count('class="tab"')
           if tabs != 7:
