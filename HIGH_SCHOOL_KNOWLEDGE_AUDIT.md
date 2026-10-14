@@ -233,3 +233,13 @@ LearningPortal の表示名「高校理科」への変更は別PRで main に反
 | 高校数学 `highschool-math/formulas.html` とカリキュラム網羅性（②） | 公式データ158項目、20の単元ラベルを確認。演習ページ・公式ページのJavaScript構文チェックは成功。テストの小問数・大問の対応を静的に確認。 | 公式項目数は学習指導要領全範囲の網羅を意味しない。数学Ⅰ・A・Ⅱ・B・Ⅲ・Cの科目別・単元別対応表、証明・計算・グラフ・統計的推測・複素数平面等の不足照合、全解答・解説の独立した数学的検算を継続する。今回の修正後に実機ブラウザでの確認はしていない。 |
 
 構成参照：河合塾 Kei-Net の[2026年度「数学Ⅰ，数学Ａ」問題構成と設問別分析](https://www.keinet.ne.jp/learning/center/math-1a.html)および[2026年度「数学Ⅱ，数学Ｂ，数学Ｃ」問題構成](https://www.keinet.ne.jp/learning/center/math-2bc.html)。数学Ⅰ・Aは2026年度本試験で4大問、70分の構成。今回の演習はその構成を参考にしたオリジナル問題であり、本試験問題の転載ではない。
+
+
+### 第7次監査・国語テストの表示先と設問数（2026-10-14）
+
+| 対象 | 今回の修正 | 静的確認・残課題 |
+|---|---|---|
+| 高校国語 `highschool-japanese/index.html` | 共通テスト型を5大問・計47問に拡充。評論、小説、実用的文章・資料、古文、漢文の各大問に関連設問を追加。模擬テストは同一本文に基づく大問1題・計10問に拡充し、40分タイマーを設定。共通テスト型は90分。 | 問題数・遷移用クエリ・追加設問データを静的確認。本文量・資料の種類・設問の質はまだ本試験と同等ではなく、科目範囲の完全網羅も未確認。ブラウザ上の表示・動作テストは未実施。 |
+| 高校国語 `highschool-japanese/practice.html` | 模擬テスト・共通テスト型の直接リンクを追加し、統一テスト画面の設問数を明記。古い演習画面との混同を減らす。 | 統一先は `index.html?subject=japanese&mode=mock|common`。公開サイトでのキャッシュ・Pages反映と実機表示はユーザー側のブラウザ確認が必要。 |
+
+対象ファイル：[国語 index.html](https://github.com/pass-juken-academy2026/highschool-japanese/blob/main/index.html)、[国語 practice.html](https://github.com/pass-juken-academy2026/highschool-japanese/blob/main/practice.html)。
