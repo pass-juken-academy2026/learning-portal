@@ -222,3 +222,5 @@ LearningPortal の表示名「高校理科」への変更は別PRで main に反
 | 高校国語・カリキュラム網羅性（②） | 既存の用語150項目・古典／現代文／漢文の学習導線を再確認。 | 用語の件数・重複整理は、学習指導要領の全項目を網羅した証明ではない。現代の国語・言語文化・論理国語・文学国語・国語表現・古典探究の科目別対応表、文学史・作品・作者、文法・読解技能の単元別不足照合を継続する。 |
 
 共通テストの参照先：大学入試センターの[令和8年度試験情報](https://www.dnc.ac.jp/kyotsu/kako_shiken_jouhou/r8/index.html)および、2026年度国語の大問別設問数の分析（[河合塾 Kei-Net](https://www.keinet.ne.jp/learning/center/japanese.html)）。今回の掲載内容は本試験の問題転載ではなく、構成を参照したオリジナル演習である。
+
+補足：旧来の `highschool-japanese/practice.html` から模擬テスト／共通テストを開始した場合も、同じ構造化テストへ遷移するよう接続した（[index.html](https://github.com/pass-juken-academy2026/highschool-japanese/blob/main/index.html)、[practice.html](https://github.com/pass-juken-academy2026/highschool-japanese/blob/main/practice.html)）。
