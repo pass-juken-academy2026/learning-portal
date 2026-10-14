@@ -212,3 +212,13 @@ LearningPortal の表示名「高校理科」への変更は別PRで main に反
 - 高校5科目ページのレスポンシブ・アクセシビリティ調整：国語（[PR #13](https://github.com/pass-juken-academy2026/highschool-japanese/pull/13)）、数学（[PR #16](https://github.com/pass-juken-academy2026/highschool-math/pull/16)）、理科（[PR #14](https://github.com/pass-juken-academy2026/highschool-biology/pull/14)）、社会（[PR #13](https://github.com/pass-juken-academy2026/highschool-social-studies/pull/13)）、情報I（[PR #18](https://github.com/pass-juken-academy2026/highschool-information/pull/18)）。
 
 数学・理科・社会・情報Iの知識追加PR、およびLearningPortalと高校5科目ページのレイアウトPRは、GitHub Actionsの Validate static site が成功した後に main へ反映済み。国語の区切り修正後も、修正を含むmainを基点にしたレイアウトPRの検証が成功した。検証はHTML／インラインJavaScriptの構文と重複IDを対象とし、実機での視覚的な全画面確認を意味するものではない。
+
+ 
+### 第5次監査・国語の模擬／共通テスト構成（2026-10-14）
+
+| 対象 | 今回の監査・修正 | 検証・残課題 |
+|---|---|---|
+| 高校国語 `highschool-japanese/index.html` | 模擬テストを「大問1題＋同じ本文に基づく関連小問6問」に変更。共通テスト型は、2026年度本試験の最新公表分析を参照し、評論10問・小説7問・実用的文章5問・古文7問・漢文8問の5大問・計37小問に拡充。共通テスト型には90分タイマーを追加。本文・資料・設問は独自作成。 | 問数と大問分野構成は2026年度の公表分析に合わせた。配点の厳密な再現、マーク形式の多様性、設問難度・本文分量の完全一致は未完了。ブラウザ上の操作・表示テストは未実施。 |
+| 高校国語・カリキュラム網羅性（②） | 既存の用語150項目・古典／現代文／漢文の学習導線を再確認。 | 用語の件数・重複整理は、学習指導要領の全項目を網羅した証明ではない。現代の国語・言語文化・論理国語・文学国語・国語表現・古典探究の科目別対応表、文学史・作品・作者、文法・読解技能の単元別不足照合を継続する。 |
+
+共通テストの参照先：大学入試センターの[令和8年度試験情報](https://www.dnc.ac.jp/kyotsu/kako_shiken_jouhou/r8/index.html)および、2026年度国語の大問別設問数の分析（[河合塾 Kei-Net](https://www.keinet.ne.jp/learning/center/japanese.html)）。今回の掲載内容は本試験の問題転載ではなく、構成を参照したオリジナル演習である。
