@@ -243,3 +243,14 @@ LearningPortal の表示名「高校理科」への変更は別PRで main に反
 | 高校国語 `highschool-japanese/practice.html` | 模擬テスト・共通テスト型の直接リンクを追加し、統一テスト画面の設問数を明記。古い演習画面との混同を減らす。 | 統一先は `index.html?subject=japanese&mode=mock|common`。公開サイトでのキャッシュ・Pages反映と実機表示はユーザー側のブラウザ確認が必要。 |
 
 対象ファイル：[国語 index.html](https://github.com/pass-juken-academy2026/highschool-japanese/blob/main/index.html)、[国語 practice.html](https://github.com/pass-juken-academy2026/highschool-japanese/blob/main/practice.html)。
+
+
+### 第8次監査・国語テスト本文と資料の拡充（2026-10-14）
+
+| 対象 | 今回の修正 | 静的確認・残課題 |
+|---|---|---|
+| 高校国語 `highschool-japanese/index.html` | 共通テスト型の評論文を、情報の根拠・解釈・推論を扱う複数段落へ拡充。小説は人物の迷いと読後の対話を描く本文へ拡充。実用的文章は複数回答可の条件、回答数・割合の表、調査で断定できない範囲を追加。古文は場面と心情の展開、漢文は書き下し・現代語訳・語注を補足。模擬テスト本文も論理展開と資料解釈の説明を増補。 |
+| 設問・画面 | 共通テスト型5大問・47問、模擬テスト1大問・10問、タイマー90分／40分、直接遷移クエリを維持。設問データの正答番号が選択肢数の範囲内であることを静的確認。 |
+| 残課題 | 本文量・設問形式・難易度は、実際の大学入学共通テストの問題冊子と同等とはまだ言えない。全設問の独立した内容検算、学習指導要領との単元別照合、実機ブラウザでの表示・タイマー・採点・復習動作の確認は未完了。 |
+
+対象ファイル：[国語 index.html](https://github.com/pass-juken-academy2026/highschool-japanese/blob/main/index.html)。本更新は学習用のオリジナル文章・資料による改善であり、実際の試験問題を転載したものではない。
