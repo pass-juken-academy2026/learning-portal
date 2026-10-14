@@ -224,3 +224,12 @@ LearningPortal の表示名「高校理科」への変更は別PRで main に反
 共通テストの参照先：大学入試センターの[令和8年度試験情報](https://www.dnc.ac.jp/kyotsu/kako_shiken_jouhou/r8/index.html)および、2026年度国語の大問別設問数の分析（[河合塾 Kei-Net](https://www.keinet.ne.jp/learning/center/japanese.html)）。今回の掲載内容は本試験の問題転載ではなく、構成を参照したオリジナル演習である。
 
 補足：旧来の `highschool-japanese/practice.html` から模擬テスト／共通テストを開始した場合も、同じ構造化テストへ遷移するよう接続した（[index.html](https://github.com/pass-juken-academy2026/highschool-japanese/blob/main/index.html)、[practice.html](https://github.com/pass-juken-academy2026/highschool-japanese/blob/main/practice.html)）。
+ 
+### 第6次監査・数学の模擬／共通テスト構成（2026-10-14）
+
+| 対象 | 今回の監査・修正 | 検証・残課題 |
+|---|---|---|
+| 高校数学 `highschool-math/practice.html` | 模擬テストを「大問1題＋同じ設定に基づく関連小問8問」に変更。共通テスト型は2026年度「数学Ⅰ，数学Ａ」の公表構成を参照し、4大問・計23設問に拡充。集合・図形と計量、二次関数・データ分析、図形の性質、場合の数と確率の資料・条件・関連設問を追加。共通テスト型70分、模擬テスト40分のタイマーを追加。 | 設問データはオリジナル。2026年度の大問分野構成・試験時間を参考にしているが、実際の問題冊子と同一の文章量・配点・マーク形式・難易度を再現したものではない。ブラウザ上の動作・表示確認は未実施。 |
+| 高校数学 `highschool-math/formulas.html` とカリキュラム網羅性（②） | 公式データ158項目、20の単元ラベルを確認。演習ページ・公式ページのJavaScript構文チェックは成功。テストの小問数・大問の対応を静的に確認。 | 公式項目数は学習指導要領全範囲の網羅を意味しない。数学Ⅰ・A・Ⅱ・B・Ⅲ・Cの科目別・単元別対応表、証明・計算・グラフ・統計的推測・複素数平面等の不足照合、全解答・解説の独立した数学的検算を継続する。今回の修正後に実機ブラウザでの確認はしていない。 |
+
+構成参照：河合塾 Kei-Net の[2026年度「数学Ⅰ，数学Ａ」問題構成と設問別分析](https://www.keinet.ne.jp/learning/center/math-1a.html)および[2026年度「数学Ⅱ，数学Ｂ，数学Ｃ」問題構成](https://www.keinet.ne.jp/learning/center/math-2bc.html)。数学Ⅰ・Aは2026年度本試験で4大問、70分の構成。今回の演習はその構成を参考にしたオリジナル問題であり、本試験問題の転載ではない。
