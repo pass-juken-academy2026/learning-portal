@@ -142,7 +142,7 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
           const before = await page.evaluate(() => ({
             url: location.href,
             html: document.body?.innerHTML || '',
-            active: document.activeElement?.id || document.activeElement?.tagName || '',
+            formState: JSON.stringify(Array.from(document.querySelectorAll('input,select,textarea')).map(el => ({ id: el.id, tag: el.tagName, value: el.value, checked: !!el.checked, selectedIndex: el.selectedIndex }))),
           }));
           try {
             await button.click({ timeout: 2500 });
@@ -154,7 +154,7 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
           const after = await page.evaluate(() => ({
             url: location.href,
             html: document.body?.innerHTML || '',
-            active: document.activeElement?.id || document.activeElement?.tagName || '',
+            formState: JSON.stringify(Array.from(document.querySelectorAll('input,select,textarea')).map(el => ({ id: el.id, tag: el.tagName, value: el.value, checked: !!el.checked, selectedIndex: el.selectedIndex }))),
           }));
           const emptyAfterClick = await page.locator('[data-cards],[data-results],[data-items],[data-questions],[data-lesson],[data-tips],[data-quick],[data-app],[data-data],[data-mock],[data-reviews],[id*="results"],[id*="list"],[id*="grid"],[class*="results"],[class*="cards"],[class*="grid"],[class*="list"]').evaluateAll(els => els.filter(el => {
             const s = getComputedStyle(el);
@@ -165,7 +165,7 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
           if (emptyAfterClick.length && /search|検索|学ぶ|開始|start|practice|演習|問題|表示|show|次へ|next|選択/i.test(label)) {
             reviewFlags.push(rel + ': after button "' + label + '", visible content containers have no items (review): ' + emptyAfterClick.join(', '));
           }
-          if (before.url === after.url && before.html === after.html && !silentActionAllowed(label)) {
+          if (before.url === after.url && before.html === after.html && before.formState === after.formState && !silentActionAllowed(label)) {
             failures.push(rel + ': button "' + label + '" had no observable effect when clicked');
           }
           if (jsErrors.length) {
