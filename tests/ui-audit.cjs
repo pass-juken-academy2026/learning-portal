@@ -40,6 +40,26 @@ function localPathFromUrl(raw, currentFile) {
     return target;
   } catch { return null; }
 }
+async function prepareButtonState(button, label) {
+  if (/全選択|select all/i.test(label)) {
+    await button.evaluate(el => {
+      const scope = el.closest('section,form,.panel,[role="tabpanel"]') || document;
+      scope.querySelectorAll('input[type="checkbox"]:not([disabled])').forEach(input => {
+        input.checked = false;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    });
+  } else if (/全解除|deselect|clear all/i.test(label)) {
+    await button.evaluate(el => {
+      const scope = el.closest('section,form,.panel,[role="tabpanel"]') || document;
+      scope.querySelectorAll('input[type="checkbox"]:not([disabled])').forEach(input => {
+        input.checked = true;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    });
+  }
+}
+
 function silentActionAllowed(label) {
   return /^(コピー|copy|共有|share|ダウンロード|download|リセット|reset|クリア|clear|解除|消去|削除|delete|閉じる|close|戻る|back|トップ|top|再生|play|一時停止|pause|ミュート|mute|音量|volume|メニュー|menu|詳細|more|拡大|縮小|zoom|前へ|次へ|prev|next|テーマ|theme|表示切替|toggle|空にする|もう一度|再挑戦|again|retry|印刷|print|ファイル|file|選択|select)$/i.test(label.trim())
     || /(コピー|copy|共有|share|ダウンロード|download|閉じる|close|メニュー|menu|音量|mute|再生|play|拡大|縮小|zoom)/i.test(label);
@@ -143,6 +163,7 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
           if (i >= await buttons.count()) continue;
           const button = buttons.nth(i);
           const label = cleanText(await button.innerText().catch(() => '')) || await button.getAttribute('aria-label') || await button.getAttribute('title') || '(button ' + (i + 1) + ')';
+          await prepareButtonState(button, label);
           const alreadySelected = (await button.getAttribute('aria-selected')) === 'true' || (await button.getAttribute('aria-pressed')) === 'true';
           const dialogsBefore = dialogs.length;
           const before = await page.evaluate(() => ({
@@ -217,7 +238,8 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
                 if (j >= await buttons.count()) { await probe.close(); continue; }
                 const button = buttons.nth(j);
                 const label = cleanText(await button.innerText().catch(() => '')) || await button.getAttribute('aria-label') || await button.getAttribute('title') || '(page button ' + (j + 1) + ')';
-                const alreadySelected = (await button.getAttribute('aria-selected')) === 'true' || (await button.getAttribute('aria-pressed')) === 'true';
+                await prepareButtonState(button, label);
+          const alreadySelected = (await button.getAttribute('aria-selected')) === 'true' || (await button.getAttribute('aria-pressed')) === 'true';
                 const dialogsBefore = pageDialogs.length;
                 const before = await probe.evaluate(() => ({
                   url: location.href,
