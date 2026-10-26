@@ -1,0 +1,45 @@
+name: UI and responsive audit
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ui-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: npm install --no-save playwright
+        timeout-minutes: 5
+      - name: Install Chromium dependencies
+        run: npx playwright install-deps chromium
+        timeout-minutes: 10
+      - name: Install Chromium
+        run: npx playwright install chromium
+        timeout-minutes: 5
+      - name: Start static server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/ui-audit-server.log 2>&1 &
+          for i in $(seq 1 20); do
+            if curl --silent --fail http://127.0.0.1:4173/index.html > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/ui-audit-server.log
+          exit 1
+      - name: Audit every HTML page, viewport, local resource and button
+        run: node tests/ui-audit.cjs
+      - name: Upload screenshots for diagnosis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-audit-screenshots
+          path: test-results/ui-audit/
+          if-no-files-found: ignore
+          retention-days: 7
