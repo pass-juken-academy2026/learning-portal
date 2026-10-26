@@ -165,7 +165,7 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
           if (emptyAfterClick.length && /search|検索|学ぶ|開始|start|practice|演習|問題|表示|show|次へ|next|選択/i.test(label)) {
             reviewFlags.push(rel + ': after button "' + label + '", visible content containers have no items (review): ' + emptyAfterClick.join(', '));
           }
-          if (before.url === after.url && before.html === after.html && before.active === after.active && !silentActionAllowed(label)) {
+          if (before.url === after.url && before.html === after.html && !silentActionAllowed(label)) {
             failures.push(rel + ': button "' + label + '" had no observable effect when clicked');
           }
           if (jsErrors.length) {
