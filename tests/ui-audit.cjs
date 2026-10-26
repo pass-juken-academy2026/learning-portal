@@ -100,6 +100,20 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
             return !hasLabel;
           }).map(el => el.tagName.toLowerCase() + (el.id ? '#' + el.id : '')));
           if (unlabeled.length) reviewFlags.push(rel + ' [' + viewport.name + '] controls without accessible labels: ' + unlabeled.join(', '));
+          const emptyContainers = await page.locator('[data-cards],[data-results],[data-items],[data-questions],[data-lesson],[data-tips],[data-quick],[data-app],[data-data],[data-mock],[data-reviews],[id*="results"],[id*="list"],[id*="grid"],[class*="results"],[class*="cards"],[class*="grid"],[class*="list"]').evaluateAll(els => els.filter(el => {
+            const s = getComputedStyle(el);
+            if (s.display === 'none' || s.visibility === 'hidden' || !el.getClientRects().length) return false;
+            return !el.children.length && !(el.textContent || '').trim();
+          }).map(el => (el.id ? '#' + el.id : el.tagName.toLowerCase() + '.' + String(el.className || '').split(' ').join('.'))).slice(0, 8));
+          if (emptyContainers.length) reviewFlags.push(rel + ' [' + viewport.name + '] visible content containers without items (review): ' + emptyContainers.join(', '));
+          const tinyText = await page.locator('body *').evaluateAll(els => els.filter(el => {
+            const s = getComputedStyle(el);
+            if (s.display === 'none' || s.visibility === 'hidden' || !el.getClientRects().length) return false;
+            if (!/^(P|H1|H2|H3|H4|LI|LABEL|BUTTON|A|TD|TH|SMALL|SPAN)$/.test(el.tagName)) return false;
+            const directText = Array.from(el.childNodes).filter(n => n.nodeType === Node.TEXT_NODE).map(n => n.textContent).join('').trim();
+            return directText.length > 2 && parseFloat(s.fontSize) < 12;
+          }).map(el => ({ tag: el.tagName.toLowerCase(), id: el.id, size: getComputedStyle(el).fontSize, text: (el.textContent || '').trim().slice(0, 45) })).slice(0, 6));
+          if (tinyText.length) reviewFlags.push(rel + ' [' + viewport.name + '] small visible text under 12px (review): ' + tinyText.map(x => x.tag + (x.id ? '#' + x.id : '') + ' ' + x.size + ' "' + x.text + '"').join('; '));
         } catch (e) {
           failures.push(rel + ' [' + viewport.name + '] ' + e.message);
           await page.screenshot({ path: path.join(screenshots, 'failure-' + rel.replace(/[^a-z0-9_-]/gi, '_') + '-' + viewport.name + '.png'), fullPage: true }).catch(() => {});
@@ -141,6 +155,14 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
             html: document.body?.innerHTML || '',
             active: document.activeElement?.id || document.activeElement?.tagName || '',
           }));
+          const emptyAfterClick = await page.locator('[data-cards],[data-results],[data-items],[data-questions],[data-lesson],[data-tips],[data-quick],[data-app],[data-data],[data-mock],[data-reviews],[id*="results"],[id*="list"],[id*="grid"],[class*="results"],[class*="cards"],[class*="grid"],[class*="list"]').evaluateAll(els => els.filter(el => {
+            const s = getComputedStyle(el);
+            if (s.display === 'none' || s.visibility === 'hidden' || !el.getClientRects().length) return false;
+            return !el.children.length && !(el.textContent || '').trim();
+          }).map(el => el.id ? '#' + el.id : el.tagName.toLowerCase() + '.' + String(el.className || '').split(' ').join('.')).slice(0, 8));
+          if (emptyAfterClick.length && /search|検索|学ぶ|開始|start|practice|演習|問題|表示|show|次へ|next|選択/i.test(label)) {
+            reviewFlags.push(rel + ': after button "' + label + '", visible content containers have no items (review): ' + emptyAfterClick.join(', '));
+          }
           if (before.url === after.url && before.html === after.html && before.active === after.active && !silentActionAllowed(label)) {
             failures.push(rel + ': button "' + label + '" had no observable effect when clicked');
           }
