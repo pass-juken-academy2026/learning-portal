@@ -103,6 +103,7 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
           const emptyContainers = await page.locator('[data-cards],[data-results],[data-items],[data-questions],[data-lesson],[data-tips],[data-quick],[data-app],[data-data],[data-mock],[data-reviews],[id*="results"],[id*="list"],[id*="grid"],[class*="results"],[class*="cards"],[class*="grid"],[class*="list"]').evaluateAll(els => els.filter(el => {
             const s = getComputedStyle(el);
             if (s.display === 'none' || s.visibility === 'hidden' || !el.getClientRects().length) return false;
+            if (el.id === 'sws-results' && !(document.getElementById('sws-query')?.value || '').trim()) return false;
             return !el.children.length && !(el.textContent || '').trim();
           }).map(el => (el.id ? '#' + el.id : el.tagName.toLowerCase() + '.' + String(el.className || '').split(' ').join('.'))).slice(0, 8));
           if (emptyContainers.length) reviewFlags.push(rel + ' [' + viewport.name + '] visible content containers without items (review): ' + emptyContainers.join(', '));
@@ -158,6 +159,7 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
           const emptyAfterClick = await page.locator('[data-cards],[data-results],[data-items],[data-questions],[data-lesson],[data-tips],[data-quick],[data-app],[data-data],[data-mock],[data-reviews],[id*="results"],[id*="list"],[id*="grid"],[class*="results"],[class*="cards"],[class*="grid"],[class*="list"]').evaluateAll(els => els.filter(el => {
             const s = getComputedStyle(el);
             if (s.display === 'none' || s.visibility === 'hidden' || !el.getClientRects().length) return false;
+            if (el.id === 'sws-results' && !(document.getElementById('sws-query')?.value || '').trim()) return false;
             return !el.children.length && !(el.textContent || '').trim();
           }).map(el => el.id ? '#' + el.id : el.tagName.toLowerCase() + '.' + String(el.className || '').split(' ').join('.')).slice(0, 8));
           if (emptyAfterClick.length && /search|検索|学ぶ|開始|start|practice|演習|問題|表示|show|次へ|next|選択/i.test(label)) {
