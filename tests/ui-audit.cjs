@@ -57,7 +57,8 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
         const jsErrors = [];
         const badResponses = [];
         page.on('pageerror', e => jsErrors.push(e.stack || e.message));
-      page.on('dialog', dialog => dialog.accept().catch(() => {}));
+      const dialogs = [];
+      page.on('dialog', dialog => { dialogs.push({ type: dialog.type(), message: dialog.message() }); dialog.accept().catch(() => {}); });
         page.on('response', r => {
           if (r.url().startsWith(base) && r.status() >= 400) badResponses.push(r.status() + ' ' + r.url());
         });
@@ -140,10 +141,13 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
           if (i >= await buttons.count()) continue;
           const button = buttons.nth(i);
           const label = cleanText(await button.innerText().catch(() => '')) || await button.getAttribute('aria-label') || await button.getAttribute('title') || '(button ' + (i + 1) + ')';
+          const alreadySelected = (await button.getAttribute('aria-selected')) === 'true' || (await button.getAttribute('aria-pressed')) === 'true';
+          const dialogsBefore = dialogs.length;
           const before = await page.evaluate(() => ({
             url: location.href,
             html: document.body?.innerHTML || '',
             formState: JSON.stringify(Array.from(document.querySelectorAll('input,select,textarea')).map(el => ({ id: el.id, tag: el.tagName, value: el.value, checked: !!el.checked, selectedIndex: el.selectedIndex }))),
+            storageState: JSON.stringify({ local: Object.keys(localStorage).sort().map(k => [k, localStorage.getItem(k)]), session: Object.keys(sessionStorage).sort().map(k => [k, sessionStorage.getItem(k)]) }),
           }));
           try {
             await button.click({ timeout: 2500 });
@@ -156,6 +160,7 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
             url: location.href,
             html: document.body?.innerHTML || '',
             formState: JSON.stringify(Array.from(document.querySelectorAll('input,select,textarea')).map(el => ({ id: el.id, tag: el.tagName, value: el.value, checked: !!el.checked, selectedIndex: el.selectedIndex }))),
+            storageState: JSON.stringify({ local: Object.keys(localStorage).sort().map(k => [k, localStorage.getItem(k)]), session: Object.keys(sessionStorage).sort().map(k => [k, sessionStorage.getItem(k)]) }),
           }));
           const emptyAfterClick = await page.locator('[data-cards],[data-results],[data-items],[data-questions],[data-lesson],[data-tips],[data-quick],[data-app],[data-data],[data-mock],[data-reviews],[id*="results"],[id*="list"],[id*="grid"],[class*="results"],[class*="cards"],[class*="grid"],[class*="list"]').evaluateAll(els => els.filter(el => {
             const s = getComputedStyle(el);
@@ -166,7 +171,7 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
           if (emptyAfterClick.length && /search|検索|学ぶ|開始|start|practice|演習|問題|表示|show|次へ|next|選択/i.test(label)) {
             reviewFlags.push(rel + ': after button "' + label + '", visible content containers have no items (review): ' + emptyAfterClick.join(', '));
           }
-          if (before.url === after.url && before.html === after.html && before.formState === after.formState && !silentActionAllowed(label)) {
+          if (before.url === after.url && before.html === after.html && before.formState === after.formState && before.storageState === after.storageState && dialogs.length === dialogsBefore && !alreadySelected && !silentActionAllowed(label)) {
             failures.push(rel + ': button "' + label + '" had no observable effect when clicked');
           }
           if (jsErrors.length) {
@@ -196,8 +201,9 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
             for (let j = 0; j < pageButtonCount; j++) {
               const probe = await browser.newPage({ viewport: { width: 1365, height: 900 } });
               const errors = [];
+              const pageDialogs = [];
               probe.on('pageerror', e => errors.push(e.stack || e.message));
-              probe.on('dialog', dialog => dialog.accept().catch(() => {}));
+              probe.on('dialog', dialog => { pageDialogs.push({ type: dialog.type(), message: dialog.message() }); dialog.accept().catch(() => {}); });
               try {
                 await probe.addInitScript(() => { try { localStorage.clear(); sessionStorage.clear(); } catch {} });
                 await probe.goto(route, { waitUntil: 'domcontentloaded', timeout: 20000 });
@@ -209,10 +215,13 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
                 if (j >= await buttons.count()) { await probe.close(); continue; }
                 const button = buttons.nth(j);
                 const label = cleanText(await button.innerText().catch(() => '')) || await button.getAttribute('aria-label') || await button.getAttribute('title') || '(page button ' + (j + 1) + ')';
+                const alreadySelected = (await button.getAttribute('aria-selected')) === 'true' || (await button.getAttribute('aria-pressed')) === 'true';
+                const dialogsBefore = pageDialogs.length;
                 const before = await probe.evaluate(() => ({
                   url: location.href,
                   html: document.body?.innerHTML || '',
                   formState: JSON.stringify(Array.from(document.querySelectorAll('input,select,textarea')).map(el => ({ id: el.id, tag: el.tagName, value: el.value, checked: !!el.checked, selectedIndex: el.selectedIndex }))),
+            storageState: JSON.stringify({ local: Object.keys(localStorage).sort().map(k => [k, localStorage.getItem(k)]), session: Object.keys(sessionStorage).sort().map(k => [k, sessionStorage.getItem(k)]) }),
                 }));
                 await button.click({ timeout: 2500 });
                 await probe.waitForTimeout(150);
@@ -220,8 +229,9 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
                   url: location.href,
                   html: document.body?.innerHTML || '',
                   formState: JSON.stringify(Array.from(document.querySelectorAll('input,select,textarea')).map(el => ({ id: el.id, tag: el.tagName, value: el.value, checked: !!el.checked, selectedIndex: el.selectedIndex }))),
+            storageState: JSON.stringify({ local: Object.keys(localStorage).sort().map(k => [k, localStorage.getItem(k)]), session: Object.keys(sessionStorage).sort().map(k => [k, sessionStorage.getItem(k)]) }),
                 }));
-                if (before.url === after.url && before.html === after.html && before.formState === after.formState && !silentActionAllowed(label)) {
+                if (before.url === after.url && before.html === after.html && before.formState === after.formState && before.storageState === after.storageState && pageDialogs.length === dialogsBefore && !alreadySelected && !silentActionAllowed(label)) {
                   failures.push(rel + ': page "' + pageName + '" button "' + label + '" had no observable effect when clicked');
                 }
                 if (errors.length) failures.push(rel + ': JS error on page "' + pageName + '" after button "' + label + '": ' + Array.from(new Set(errors)).join('; '));
