@@ -128,6 +128,8 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
       const page = await browser.newPage({ viewport: { width: 1365, height: 900 } });
       const jsErrors = [];
       page.on('pageerror', e => jsErrors.push(e.stack || e.message));
+      const dialogs = [];
+      page.on('dialog', dialog => { dialogs.push({ type: dialog.type(), message: dialog.message() }); dialog.accept().catch(() => {}); });
       try {
         await page.addInitScript(() => { try { localStorage.clear(); sessionStorage.clear(); } catch {} });
         await page.goto(route, { waitUntil: 'domcontentloaded', timeout: 20000 });
