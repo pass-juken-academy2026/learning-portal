@@ -70,10 +70,9 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
             bodyChildren: document.body?.children.length || 0,
             width: document.documentElement.clientWidth,
             scrollWidth: document.documentElement.scrollWidth,
-            offenders: [...document.querySelectorAll('body *')].map(el => { const r = el.getBoundingClientRect(); return { tag: el.tagName, id: el.id, cls: String(el.className || '').slice(0,80), left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width), text: (el.innerText || '').trim().slice(0,70) }; }).filter(x => x.right > window.innerWidth + 8 && x.width > 0).slice(0,12),
           }));
           if (!state.bodyChildren || (state.text.length < 20 && state.bodyChildren < 2)) failures.push(rel + ' [' + viewport.name + '] appears blank (title: ' + state.title + ')');
-          if (state.scrollWidth > state.width + 8) failures.push(rel + ' [' + viewport.name + '] horizontal overflow: ' + state.scrollWidth + 'px > ' + state.width + 'px; offenders=' + JSON.stringify(state.offenders));
+          if (state.scrollWidth > state.width + 8) failures.push(rel + ' [' + viewport.name + '] horizontal overflow: ' + state.scrollWidth + 'px > ' + state.width + 'px');
           if (badResponses.length) failures.push(rel + ' [' + viewport.name + '] failed local resources: ' + Array.from(new Set(badResponses)).join('; '));
           if (jsErrors.length) failures.push(rel + ' [' + viewport.name + '] uncaught JS errors: ' + Array.from(new Set(jsErrors)).join('; '));
           await page.screenshot({ path: path.join(screenshots, rel.replace(/[^a-z0-9_-]/gi, '_') + '-' + viewport.name + '.png'), fullPage: true }).catch(() => {});
@@ -97,7 +96,7 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
               || (el.getAttribute('title') || '').trim()
               || (el.labels && Array.from(el.labels).some(l => l.innerText.trim()))
               || (id && document.querySelector('label[for="' + CSS.escape(id) + '"]'))
-              || (el.innerText || el.value || el.getAttribute('placeholder') || '').trim();
+              || (el.innerText || el.textContent || el.value || el.getAttribute('placeholder') || '').trim();
             return !hasLabel;
           }).map(el => el.tagName.toLowerCase() + (el.id ? '#' + el.id : '')));
           if (unlabeled.length) reviewFlags.push(rel + ' [' + viewport.name + '] controls without accessible labels: ' + unlabeled.join(', '));
@@ -143,7 +142,7 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
             active: document.activeElement?.id || document.activeElement?.tagName || '',
           }));
           if (before.url === after.url && before.html === after.html && before.active === after.active && !silentActionAllowed(label)) {
-            reviewFlags.push(rel + ': button "' + label + '" had no observable effect when clicked');
+            failures.push(rel + ': button "' + label + '" had no observable effect when clicked');
           }
           if (jsErrors.length) {
             failures.push(rel + ': JS error after button "' + label + '": ' + Array.from(new Set(jsErrors)).join('; '));
