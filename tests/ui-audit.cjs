@@ -56,7 +56,7 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
         const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
         const jsErrors = [];
         const badResponses = [];
-        page.on('pageerror', e => jsErrors.push(e.message));
+        page.on('pageerror', e => jsErrors.push(e.stack || e.message));
         page.on('response', r => {
           if (r.url().startsWith(base) && r.status() >= 400) badResponses.push(r.status() + ' ' + r.url());
         });
@@ -110,8 +110,9 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
 
       const page = await browser.newPage({ viewport: { width: 1365, height: 900 } });
       const jsErrors = [];
-      page.on('pageerror', e => jsErrors.push(e.message));
+      page.on('pageerror', e => jsErrors.push(e.stack || e.message));
       try {
+        await page.addInitScript(() => { try { localStorage.clear(); sessionStorage.clear(); } catch {} });
         await page.goto(route, { waitUntil: 'domcontentloaded', timeout: 20000 });
         await page.waitForTimeout(200);
         const count = await page.locator('button:visible:not([disabled])').count();
