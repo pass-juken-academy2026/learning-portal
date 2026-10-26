@@ -41,7 +41,7 @@ function localPathFromUrl(raw, currentFile) {
   } catch { return null; }
 }
 function silentActionAllowed(label) {
-  return /^(コピー|copy|共有|share|ダウンロード|download|リセット|reset|クリア|clear|解除|消去|削除|delete|閉じる|close|戻る|back|トップ|top|再生|play|一時停止|pause|ミュート|mute|音量|volume|メニュー|menu|詳細|more|拡大|縮小|zoom|前へ|次へ|prev|next|テーマ|theme|表示切替|toggle)$/i.test(label.trim())
+  return /^(コピー|copy|共有|share|ダウンロード|download|リセット|reset|クリア|clear|解除|消去|削除|delete|閉じる|close|戻る|back|トップ|top|再生|play|一時停止|pause|ミュート|mute|音量|volume|メニュー|menu|詳細|more|拡大|縮小|zoom|前へ|次へ|prev|next|テーマ|theme|表示切替|toggle|空にする|もう一度|再挑戦|again|retry|印刷|print|ファイル|file|選択|select)$/i.test(label.trim())
     || /(コピー|copy|共有|share|ダウンロード|download|閉じる|close|メニュー|menu|音量|mute|再生|play|拡大|縮小|zoom)/i.test(label);
 }
 function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
@@ -57,6 +57,7 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
         const jsErrors = [];
         const badResponses = [];
         page.on('pageerror', e => jsErrors.push(e.stack || e.message));
+      page.on('dialog', dialog => dialog.accept().catch(() => {}));
         page.on('response', r => {
           if (r.url().startsWith(base) && r.status() >= 400) badResponses.push(r.status() + ' ' + r.url());
         });
@@ -171,6 +172,69 @@ function cleanText(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
           if (jsErrors.length) {
             failures.push(rel + ': JS error after button "' + label + '": ' + Array.from(new Set(jsErrors)).join('; '));
             break;
+          }
+        }
+        const pageNames = await page.locator('section.page[id^="page-"]').evaluateAll(els => els.map(el => el.id.replace(/^page-/, '')));
+        for (const pageName of pageNames) {
+          const navSelector = 'button[data-page="' + pageName + '"]:visible,button[data-go="' + pageName + '"]:visible';
+          const navProbe = await browser.newPage({ viewport: { width: 1365, height: 900 } });
+          try {
+            await navProbe.addInitScript(() => { try { localStorage.clear(); sessionStorage.clear(); } catch {} });
+            await navProbe.goto(route, { waitUntil: 'domcontentloaded', timeout: 20000 });
+            await navProbe.waitForTimeout(100);
+            const nav = navProbe.locator(navSelector).first();
+            if (!(await nav.count())) { await navProbe.close(); continue; }
+            await nav.click({ timeout: 2500 });
+            await navProbe.waitForTimeout(100);
+            const active = await navProbe.locator('#page-' + pageName).evaluate(el => {
+              const s = getComputedStyle(el);
+              return s.display !== 'none' && s.visibility !== 'hidden' && el.getClientRects().length > 0;
+            }).catch(() => false);
+            if (!active) failures.push(rel + ': navigation to page "' + pageName + '" did not reveal its content');
+            const pageButtonCount = await navProbe.locator('#page-' + pageName + ' button:visible:not([disabled])').count();
+            await navProbe.close();
+            for (let j = 0; j < pageButtonCount; j++) {
+              const probe = await browser.newPage({ viewport: { width: 1365, height: 900 } });
+              const errors = [];
+              probe.on('pageerror', e => errors.push(e.stack || e.message));
+              probe.on('dialog', dialog => dialog.accept().catch(() => {}));
+              try {
+                await probe.addInitScript(() => { try { localStorage.clear(); sessionStorage.clear(); } catch {} });
+                await probe.goto(route, { waitUntil: 'domcontentloaded', timeout: 20000 });
+                await probe.waitForTimeout(100);
+                const pageNav = probe.locator(navSelector).first();
+                if (await pageNav.count()) await pageNav.click({ timeout: 2500 });
+                await probe.waitForTimeout(100);
+                const buttons = probe.locator('#page-' + pageName + ' button:visible:not([disabled])');
+                if (j >= await buttons.count()) { await probe.close(); continue; }
+                const button = buttons.nth(j);
+                const label = cleanText(await button.innerText().catch(() => '')) || await button.getAttribute('aria-label') || await button.getAttribute('title') || '(page button ' + (j + 1) + ')';
+                const before = await probe.evaluate(() => ({
+                  url: location.href,
+                  html: document.body?.innerHTML || '',
+                  formState: JSON.stringify(Array.from(document.querySelectorAll('input,select,textarea')).map(el => ({ id: el.id, tag: el.tagName, value: el.value, checked: !!el.checked, selectedIndex: el.selectedIndex }))),
+                }));
+                await button.click({ timeout: 2500 });
+                await probe.waitForTimeout(150);
+                const after = await probe.evaluate(() => ({
+                  url: location.href,
+                  html: document.body?.innerHTML || '',
+                  formState: JSON.stringify(Array.from(document.querySelectorAll('input,select,textarea')).map(el => ({ id: el.id, tag: el.tagName, value: el.value, checked: !!el.checked, selectedIndex: el.selectedIndex }))),
+                }));
+                if (before.url === after.url && before.html === after.html && before.formState === after.formState && !silentActionAllowed(label)) {
+                  failures.push(rel + ': page "' + pageName + '" button "' + label + '" had no observable effect when clicked');
+                }
+                if (errors.length) failures.push(rel + ': JS error on page "' + pageName + '" after button "' + label + '": ' + Array.from(new Set(errors)).join('; '));
+              } catch (e) {
+                failures.push(rel + ': page "' + pageName + '" button interaction failed: ' + e.message.split('\n')[0]);
+              } finally {
+                await probe.close().catch(() => {});
+              }
+            }
+          } catch (e) {
+            failures.push(rel + ': page navigation audit failed for "' + pageName + '": ' + e.message.split('\n')[0]);
+          } finally {
+            await navProbe.close().catch(() => {});
           }
         }
       } catch (e) {
