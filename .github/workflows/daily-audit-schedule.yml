@@ -1,0 +1,10 @@
+name: Daily A-plan audit
+on:
+  schedule:
+    - cron: '10 20 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  daily-audit:
+    uses: pass-juken-academy2026/learning-portal/.github/workflows/daily-audit.yml@main
