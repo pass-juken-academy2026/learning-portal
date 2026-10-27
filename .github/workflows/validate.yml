@@ -83,3 +83,5 @@ jobs:
               sys.exit(f"Expected 7 shared-tool tabs, found {tabs}")
           print("Stage 1 static coverage passed: all 7 tool views, persistence, backup, reset, and accessibility hooks.")
           PY
+      - name: Test A-plan maintenance safety
+        run: node tests/daily-maintenance.test.cjs
