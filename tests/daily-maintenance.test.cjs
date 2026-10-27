@@ -1,0 +1,35 @@
+'use strict';
+const assert = require('node:assert/strict');
+const { targetFor, validateOptions, validateIndex, questionText } = require('../scripts/daily-maintenance.cjs');
+
+const day = 20261027;
+const eligible = [
+  'pass-juken-academy2026/math-juken-saitama',
+  'pass-juken-academy2026/junior-japanese',
+  'pass-juken-academy2026/junior-science',
+  'pass-juken-academy2026/junior-social-studies',
+  'pass-juken-academy2026/highschool-japanese'
+];
+const selected = eligible[day % eligible.length];
+assert.ok(targetFor(selected, day), 'exactly one safe target should be selected for the day');
+assert.equal(eligible.filter(repo => targetFor(repo, day)).length, 1, 'rotation should target only one repository per day');
+for (const repo of eligible) {
+  const target = targetFor(repo, day);
+  if (repo === selected) assert.ok(target.kind === 'db-question' || target.kind === 'japanese-case');
+  else assert.equal(target, null);
+}
+for (const repo of [
+  'pass-juken-academy2026/english-study',
+  'pass-juken-academy2026/highschool-math',
+  'pass-juken-academy2026/highschool-biology',
+  'pass-juken-academy2026/highschool-social-studies',
+  'pass-juken-academy2026/highschool-information',
+  'pass-juken-academy2026/learning-portal'
+]) assert.equal(targetFor(repo, day), null, repo + ' must stay validation-only');
+assert.doesNotThrow(() => validateOptions(['A','B','C','D']));
+assert.throws(() => validateOptions(['A','A','C','D']), /unique/);
+assert.doesNotThrow(() => validateIndex(0));
+assert.doesNotThrow(() => validateIndex(3));
+assert.throws(() => validateIndex(4), /Answer index/);
+assert.equal(questionText({q:'例題'}, 'db-question'), '例題');
+console.log('A-plan maintenance safety tests passed.');
