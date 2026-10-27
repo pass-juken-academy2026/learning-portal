@@ -13,7 +13,7 @@
 | 5 | `junior-social-studies` | 中学社会6カテゴリ、登録問題8問。 | 大学入学共通テストの対象外。中学・高校入試向け。 | 8問は小規模。一般入試演習の拡充は別課題。 |
 | 6 | `highschool-japanese` | 評論・小説・実用的文章・古文・漢文の5大問。実行時バンク79問、1回の演習は37問（10/7/5/7/8）。 | あり。 | 実際のバンクは47問ではなく、追加分を含め79問。表示を修正済み。確認対象の正答インデックス範囲外0件、設問文の完全一致重複0件。実ブラウザ操作は未確認。 |
 | 7 | `highschool-math` | 通常演習76問、公式・定理174項目。数学Ⅰ・Aは23問／4大問、数学Ⅱ・B・Cは31問／7大問、数学Ⅲは個別試験型8問。 | あり。 | 数学Ⅰ・Aは集合と命題・図形と計量／二次関数とデータ分析／図形の性質／場合の数と確率へ再構成済み。数学Ⅱ・B・Cは三角関数・統計的仮説検定・ベクトル・複素数平面の連動設問を強化済み。両バンクの件数・選択肢範囲・資料参照を検査。 |
-| 8 | `highschool-biology` | 統合ページは生物・化学・物理・地学・理科基礎の5トラック。各トラックの共通テスト型は20問。個別の生物・化学・物理・地学ページも各20問。 | あり。ただし個別4ページは本番の大問構成に対して短め。 | 個別4ページを各25問・5大問へ拡張するPR #37を作成。静的検証成功、UI監査は確認時点で実行中。変更はテスト完了までmain未反映。 |
+| 8 | `highschool-biology` | 統合ページは生物・化学・物理・地学・理科基礎の5トラック。各トラックの共通テスト型は20問。個別の生物・化学・物理・地学ページは各25問・5大問（2026-10-27に拡張）。 | あり。ただし個別4ページは本番の大問構成に対して短め。 | 個別4ページを各25問・5大問へ拡張。PR #37は静的検証とUI監査が成功した後、mainへ反映済み。 |
 | 9 | `highschool-social-studies` | 地理・日本史・世界史・倫理・政治経済・統合の6トラック。統合ページは30大問・120小問。単独演習ページの共通テスト型は20問・4資料。 | あり。 | 統合ページは1大問4小問の資料連動型。単独演習20問は4資料に分かれる。確認対象の設問文完全一致重複0件、正答インデックス範囲外0件。 |
 | 10 | `highschool-information` | 情報Iの6分野。共通テスト型20問・4資料。 | あり。 | 4資料に連動する構成。確認対象の設問文完全一致重複0件、正答インデックス範囲外0件。 |
 | 11 | `learning-portal` | ポータル・共有学習ツール・監査記録。独立した科目問題バンクは持たない。 | 問題バンク対象外。 | 各既存リポジトリへの導線と共有ツールを管理。共通監査ワークフローを再利用する。 |
@@ -38,8 +38,8 @@
 ## Aプラン自動化の現況
 
 - 11リポジトリに日次監査ワークフローを配置済み。再利用ワークフローはHTML・インラインJavaScript・既存テストの検証を行い、問題を自動生成したり、失敗した変更を自動反映したりするものではない。
-- `highschool-social-studies` と `highschool-information` の `.github/workflows/daily-audit-schedule.yml` に `workflow_dispatch` のコロン欠落があり、GitHub Actionsでジョブのない失敗実行を確認。修正PRはそれぞれ [社会 PR #51](https://github.com/pass-juken-academy2026/highschool-social-studies/pull/51)、[情報I PR #37](https://github.com/pass-juken-academy2026/highschool-information/pull/37) として作成し、検証中。
-- `learning-portal` の `scripts/daily-maintenance.cjs` は未検証の非mainブランチに残る草案であり、実行・マージしていない。OPENAI_API_KEY等の設定も行っていない。問題自動生成は有効化していない。
+- `highschool-social-studies` と `highschool-information` の `.github/workflows/daily-audit-schedule.yml` に `workflow_dispatch` のコロン欠落があり、GitHub Actionsでジョブのない失敗実行を確認。修正PRは [社会 PR #51](https://github.com/pass-juken-academy2026/highschool-social-studies/pull/51)、[情報I PR #37](https://github.com/pass-juken-academy2026/highschool-information/pull/37) として作成し、静的検証とUI監査が成功した後にmainへ反映済み。次の日次実行でスケジュール起動とジョブ実行を確認する。
+- `learning-portal` の `scripts/daily-maintenance.cjs` は未検証の非mainブランチに残る草案であり、実行・マージしていない。現状は共通テスト配列への追加位置・大問グループ維持が不十分で、そのまま有効化すると大問の順序や問題数を崩すおそれがある。OPENAI_API_KEY等の設定も行っていないため、問題自動生成は有効化していない。
 - 監査ワークフローの修正はPRのテスト合格後にのみ反映し、反映後に日次実行がジョブを持つことを確認する。Aプランの自動問題追加は、全件監査・問題品質検証・テストゲートが整うまで有効化しない。
 
 ## 監査上の制約
