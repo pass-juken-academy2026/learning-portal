@@ -1,0 +1,100 @@
+name: Daily A-plan audit
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check HTML and inline JavaScript
+        shell: bash
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import subprocess, sys, tempfile
+          class Audit(HTMLParser):
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.ids=[]; self.scripts=[]; self.in_script=False; self.buf=[]
+              def handle_starttag(self, tag, attrs):
+                  attrs=dict(attrs)
+                  if 'id' in attrs: self.ids.append(attrs['id'])
+                  if tag=='script': self.in_script=True; self.buf=[]
+              def handle_data(self, data):
+                  if self.in_script: self.buf.append(data)
+              def handle_endtag(self, tag):
+                  if tag=='script' and self.in_script:
+                      self.scripts.append(''.join(self.buf)); self.in_script=False
+          files=list(Path('.').rglob('*.html'))
+          if not files: print('No HTML files found'); sys.exit(1)
+          failed=False
+          for f in files:
+              audit=Audit()
+              try: audit.feed(f.read_text(encoding='utf-8'))
+              except Exception as e: print(f'HTML parse error {f}: {e}'); failed=True; continue
+              dup=sorted({i for i in audit.ids if audit.ids.count(i)>1})
+              if dup: print(f'Duplicate IDs in {f}: {dup}'); failed=True
+              for n,js in enumerate(audit.scripts):
+                  if not js.strip(): continue
+                  p=Path(tempfile.gettempdir())/f'daily-audit-{abs(hash((str(f),n)))}.js'
+                  p.write_text(js,encoding='utf-8')
+                  result=subprocess.run(['node','--check',str(p)],capture_output=True,text=True)
+                  if result.returncode:
+                      print(f'JavaScript syntax error in {f} script {n+1}:\\n{result.stderr}')
+                      failed=True
+              print(f'Checked {f}: {len(audit.scripts)} inline script(s), {len(audit.ids)} IDs')
+          if failed: sys.exit(1)
+          PY
+      - name: Run known bank quality checks
+        shell: bash
+        run: |
+          set -e
+          for test in tests/audit-bank-quality.cjs tests/validate-bank-data.cjs tests/validate-question-bank.cjs tests/validate-data.cjs; do
+            if [ -f "$test" ]; then
+              echo "Running $test"
+              node "$test"
+            fi
+          done
+      - name: Install Playwright
+        if: ${{ hashFiles('tests/ui-audit.cjs') != '' }}
+        run: npm install --no-save playwright
+        timeout-minutes: 5
+      - name: Install Chromium dependencies
+        if: ${{ hashFiles('tests/ui-audit.cjs') != '' }}
+        run: npx playwright install-deps chromium
+        timeout-minutes: 10
+      - name: Install Chromium
+        if: ${{ hashFiles('tests/ui-audit.cjs') != '' }}
+        run: npx playwright install chromium
+        timeout-minutes: 5
+      - name: Start static server
+        if: ${{ hashFiles('tests/ui-audit.cjs') != '' }}
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/daily-audit-server.log 2>&1 &
+          for i in $(seq 1 20); do
+            if curl --silent --fail http://127.0.0.1:4173/index.html > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/daily-audit-server.log
+          exit 1
+      - name: Audit every HTML page, viewport, local resource and button
+        if: ${{ hashFiles('tests/ui-audit.cjs') != '' }}
+        run: node tests/ui-audit.cjs
+      - name: Write daily report
+        if: always()
+        run: |
+          {
+            echo "## Daily A-plan audit"
+            echo ""
+            echo "- Repository: $GITHUB_REPOSITORY"
+            echo "- Workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo "- Static HTML/JavaScript validation and available bank/UI tests ran in this workflow."
+            echo "- This workflow does not bypass failed tests or push unvalidated changes."
+          } >> "$GITHUB_STEP_SUMMARY"
