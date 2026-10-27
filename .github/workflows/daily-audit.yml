@@ -1,17 +1,35 @@
 name: Daily A-plan audit
 on:
   workflow_call:
+    secrets:
+      OPENAI_API_KEY:
+        required: false
 permissions:
-  contents: read
+  contents: write
 jobs:
   audit:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: pass-juken-academy2026/learning-portal
+          ref: main
+          path: .a-plan-tools
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Test A-plan maintenance safety
+        run: node .a-plan-tools/tests/daily-maintenance.test.cjs
+      - name: Generate one safe daily question candidate
+        id: maintenance
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: node .a-plan-tools/scripts/daily-maintenance.cjs
       - name: Check HTML and inline JavaScript
         shell: bash
         run: |
@@ -87,6 +105,22 @@ jobs:
       - name: Audit every HTML page, viewport, local resource and button
         if: ${{ hashFiles('tests/ui-audit.cjs') != '' }}
         run: node tests/ui-audit.cjs
+      - name: Commit generated question only after all checks pass
+        if: ${{ steps.maintenance.outputs.changed == 'true' && github.ref == 'refs/heads/main' }}
+        env:
+          TARGET_FILE: ${{ steps.maintenance.outputs.file }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          test -n "$TARGET_FILE"
+          git add -- "$TARGET_FILE"
+          if git diff --cached --quiet; then
+            echo "No staged changes to commit."
+            exit 0
+          fi
+          git commit -m "A-plan: add one independently reviewed practice question"
+          git push origin HEAD:main
+
       - name: Write daily report
         if: always()
         run: |
