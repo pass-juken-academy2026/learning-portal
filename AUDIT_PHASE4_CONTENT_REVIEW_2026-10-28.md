@@ -15,8 +15,8 @@
 | 高校国語 | 全47問について、問題文・4択・正答インデックス・解説・正規化重複を検査するCIチェックを追加 | [PR #38](https://github.com/pass-juken-academy2026/highschool-japanese/pull/38) main反映、静的検証/UI監査成功 |
 | 高校数学 | 円の中心間距離dの条件を明確化。二項分布の標準偏差式の閉じ括弧を修正 | [PR #36](https://github.com/pass-juken-academy2026/highschool-math/pull/36) main反映、静的検証/UI監査成功 |
 | 高校理科 | 生物の同一刺激文内にあった意味的重複を、30℃から40℃への反応速度変化を問う問題に置換 | [PR #39](https://github.com/pass-juken-academy2026/highschool-biology/pull/39) main反映、静的検証/UI監査成功 |
-| 高校社会 | 地理データの重複説明、12箇所の混在表記「hazard」、統合分野の同一イベントを比較する行を修正。重複文・自己比較の検査を追加 | [PR #53](https://github.com/pass-juken-academy2026/highschool-social-studies/pull/53) main反映、PR上の静的検証/UI監査成功。mainのUI監査は確認中 |
-| 英語 | リスニング30問の台本・正答・解説・計算整合を確認。既存監査でリーディング60問・リスニング30問の構造を検査 | [既存の検証実行](https://github.com/pass-juken-academy2026/english-study/actions/runs/40618184404)、[UI監査](https://github.com/pass-juken-academy2026/english-study/actions/runs/40618184371)成功 |
+| 高校社会 | 地理データの重複説明、12箇所の混在表記「hazard」、統合分野の同一イベントを比較する行を修正。重複文・自己比較の検査を追加 | [PR #53](https://github.com/pass-juken-academy2026/highschool-social-studies/pull/53) main反映、PR上およびmain反映後の静的検証/UI監査成功 |
+| 英語 | リスニング30問の台本・正答・解説・計算整合を確認。リーディングの修理イベント設問の文言と、短い休憩の実験条件の曖昧さを修正。既存監査でリーディング60問・リスニング30問の構造を検査 | [PR #36](https://github.com/pass-juken-academy2026/english-study/pull/36) main反映、静的検証/UI監査成功 |
 | 高校情報 | 20問の平均・中央値・配列処理・セキュリティ問題の正答と解説を確認 | [検証実行](https://github.com/pass-juken-academy2026/highschool-information/actions/runs/40617746229)、[UI監査](https://github.com/pass-juken-academy2026/highschool-information/actions/runs/40617746173)成功 |
 
 ## 内容面の重点確認
@@ -45,3 +45,9 @@
 6. 高校社会の修正をmainへ反映した後のUI監査が完了すること。
 
 したがって、今回の④は複数の修正・検証を反映したが、上記の全件確認が残っているため、まだ「④全完了」とは判定しない。未検証の内容を合格扱いにしない。
+
+
+## 追加の英語内容修正（2026-10-28）
+- [英語 PR #36](https://github.com/pass-juken-academy2026/english-study/pull/36) で、修理イベントの設問にあった「draft」という本文にない語を「newsletter」に修正。
+- 短い休憩の研究説明を、両グループの課題実施時間が20分で、休憩群には5分の追加休憩があると明確化。これにより比較条件の曖昧さを除去。
+- 静的検証・UI/レスポンシブ監査成功後にmainへ反映。
