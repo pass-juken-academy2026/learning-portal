@@ -122,11 +122,11 @@ function validateLinkedCommonSet(generated, existingPrompts = [], existingStimul
     const question = String(item.question || '').trim();
     const explanation = String(item.explanation || '').trim();
     if (!question || question.length > 500 || !explanation || explanation.length > 600) throw new Error('Common-test subquestion requires a prompt and explanation.');
-    if (/[<>]/.test(question) || /[<>]/.test(explanation) || item.options.some(option => typeof option === 'string' && /[<>]/.test(option))) throw new Error('Common-test question fields must be plain text; HTML markup is not allowed.');
+    validateOptions(item.options);
+    if (/[<>]/.test(question) || /[<>]/.test(explanation) || item.options.some(option => /[<>]/.test(option))) throw new Error('Common-test question fields must be plain text; HTML markup is not allowed.');
     const key = norm(question);
     if (seen.has(key)) throw new Error('Common-test subquestion is duplicated: ' + question.slice(0, 100));
     seen.add(key);
-    validateOptions(item.options);
     validateIndex(item.answerIndex);
     return [question, item.options.map(x => String(x).trim()), item.answerIndex, explanation, stimulusIndex];
   });
