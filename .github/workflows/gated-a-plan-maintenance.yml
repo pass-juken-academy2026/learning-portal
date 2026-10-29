@@ -39,11 +39,17 @@ jobs:
       fail-fast: false
       matrix:
         repository:
+          - pass-juken-academy2026/english-study
           - pass-juken-academy2026/math-juken-saitama
           - pass-juken-academy2026/junior-japanese
           - pass-juken-academy2026/junior-science
           - pass-juken-academy2026/junior-social-studies
           - pass-juken-academy2026/highschool-japanese
+          - pass-juken-academy2026/highschool-math
+          - pass-juken-academy2026/highschool-biology
+          - pass-juken-academy2026/highschool-social-studies
+          - pass-juken-academy2026/highschool-information
+          - pass-juken-academy2026/learning-portal
     steps:
       - name: Check out approved target repository
         uses: actions/checkout@v4
