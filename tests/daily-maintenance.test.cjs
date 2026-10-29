@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, insertArrayItems, questionText, writesEnabled } = require('../scripts/daily-maintenance.cjs');
+const { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, insertArrayItems, assertReviewApproved, questionText, writesEnabled } = require('../scripts/daily-maintenance.cjs');
 
 const day = 20261023;
 const slots = [
@@ -34,6 +34,10 @@ assert.equal(writesEnabled(undefined), false, 'writes must be disabled by defaul
 assert.equal(writesEnabled('false'), false, 'false must not enable writes');
 assert.equal(writesEnabled('TRUE'), false, 'only the exact string true enables writes');
 assert.equal(writesEnabled('true'), true, 'explicit opt-in enables the gate');
+assert.doesNotThrow(() => assertReviewApproved({ approved: true, issues: [], summary: 'All answer keys independently checked.' }));
+assert.throws(() => assertReviewApproved({ approved: false, issues: ['Answer index is incorrect.'], summary: 'Rejected.' }), /did not approve/);
+assert.throws(() => assertReviewApproved({ approved: true, issues: ['Ambiguous wording.'], summary: 'Rejected.' }), /did not approve/);
+assert.throws(() => assertReviewApproved({ approved: true, summary: 'Missing issues list.' }), /did not approve/);
 assert.doesNotThrow(() => validateOptions(['A','B','C','D']));
 assert.throws(() => validateOptions(['A','A','C','D']), /unique/);
 assert.doesNotThrow(() => validateIndex(0));
