@@ -51,13 +51,6 @@ jobs:
           - pass-juken-academy2026/highschool-information
           - pass-juken-academy2026/learning-portal
     steps:
-      - name: Check out approved target repository
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ matrix.repository }}
-          token: ${{ secrets.CROSS_REPO_TOKEN || github.token }}
-          path: target
-          fetch-depth: 0
       - name: Check out automation scripts
         uses: actions/checkout@v4
         with:
@@ -71,8 +64,33 @@ jobs:
           node-version: "22"
       - name: Test maintenance safety gates
         run: node orchestrator/tests/daily-maintenance.test.cjs
+      - name: Evaluate write credentials before checking out target repositories
+        id: gate
+        shell: bash
+        env:
+          A_PLAN_WRITE_ENABLED: ${{ secrets.A_PLAN_WRITE_ENABLED }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CROSS_REPO_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "$A_PLAN_WRITE_ENABLED" = "true" ] && [ -n "$OPENAI_API_KEY" ] && [ -n "$CROSS_REPO_TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "All write gates are present; target repository checkout is allowed."
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "A-plan is validation-only: configure A_PLAN_WRITE_ENABLED=true, OPENAI_API_KEY, and CROSS_REPO_TOKEN to enable question proposals."
+          fi
+      - name: Check out approved target repository
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repository }}
+          token: ${{ secrets.CROSS_REPO_TOKEN }}
+          path: target
+          fetch-depth: 0
       - name: Run gated maintenance
         id: maintenance
+        if: steps.gate.outputs.enabled == 'true'
         working-directory: target
         env:
           TARGET_REPOSITORY: ${{ matrix.repository }}
@@ -83,12 +101,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Fail closed: generation stays disabled unless every required gate is configured.
-          if [ "$A_PLAN_WRITE_ENABLED" != "true" ] || [ -z "$OPENAI_API_KEY" ] || [ -z "$CROSS_REPO_TOKEN" ]; then
-            export A_PLAN_WRITE_ENABLED=false
-            echo "A-plan is validation-only: write opt-in, OpenAI key, and cross-repo token must all be configured."
-          fi
           node ../orchestrator/scripts/daily-maintenance.cjs
+      - name: Record safe validation-only result
+        if: steps.gate.outputs.enabled != 'true'
+        run: |
+          echo "No target files were checked out or modified because write credentials are not fully configured."
       - name: Check changed-file scope and whitespace
         if: steps.maintenance.outputs.changed == 'true'
         working-directory: target
