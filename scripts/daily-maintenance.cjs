@@ -110,6 +110,7 @@ function targetFor(repo, day) {
   // Only add to expandable question banks. Fixed-length common-test arrays are
   // validation-only until they have a separate candidate bank and group-aware sampler.
   const rotation = [
+    { repo: 'pass-juken-academy2026/english-study', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/math-juken-saitama', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/junior-japanese', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/junior-science', target: { file: 'index.html', kind: 'db-question' } },
