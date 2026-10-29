@@ -128,7 +128,7 @@ function validateLinkedCommonSet(generated, existingPrompts = [], existingStimul
     validateIndex(item.answerIndex);
     return [question, item.options.map(x => String(x).trim()), item.answerIndex, explanation, stimulusIndex];
   });
-  return { stimulus: { title, text }, questions };
+  return { stimulus: { title, text, table: '' }, questions };
 }
 
 function insertArrayItems(source, span, items) {
