@@ -115,6 +115,8 @@ jobs:
       - name: Validate inline JavaScript syntax and duplicate IDs
         if: steps.maintenance.outputs.changed == 'true'
         working-directory: target
+        env:
+          TARGET_REPOSITORY: ${{ matrix.repository }}
         run: |
           python - <<'PY'
           from collections import Counter
