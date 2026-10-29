@@ -104,6 +104,8 @@ function validateIndex(index) {
   if (!Number.isInteger(index) || index < 0 || index > 3) throw new Error('Answer index must be 0, 1, 2, or 3.');
 }
 
+function writesEnabled(value) { return value === 'true'; }
+
 function targetFor(repo, day) {
   // Only add to expandable question banks. Fixed-length common-test arrays are
   // validation-only until they have a separate candidate bank and group-aware sampler.
@@ -184,6 +186,12 @@ async function main() {
   if (!target) {
     info(repo + ' has no question bank targeted for automated additions; validation-only run.');
     out('changed', 'false'); out('summary', 'No question bank in this repository; validation only.');
+    return;
+  }
+
+  if (!writesEnabled(process.env.A_PLAN_WRITE_ENABLED)) {
+    info('A_PLAN_WRITE_ENABLED is not true; automatic generation is disabled.');
+    out('changed', 'false'); out('summary', 'Automatic generation disabled by explicit write gate.');
     return;
   }
   const filePath = path.resolve(target.file);
@@ -296,4 +304,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { targetFor, validateOptions, validateIndex, questionText, norm };
+module.exports = { targetFor, validateOptions, validateIndex, questionText, norm, writesEnabled };
