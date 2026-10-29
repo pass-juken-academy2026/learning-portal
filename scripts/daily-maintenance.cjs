@@ -211,6 +211,36 @@ async function generate(apiKey, model, context) {
   return parseApiJson(text);
 }
 
+function assertReviewApproved(review) {
+  if (!review || review.approved !== true || !Array.isArray(review.issues) || review.issues.length > 0 || typeof review.summary !== 'string' || !review.summary.trim()) {
+    const issues = review && Array.isArray(review.issues) ? review.issues.map(String).slice(0, 5).join('; ') : 'review response was incomplete';
+    throw new Error('Independent content review did not approve the candidate: ' + issues);
+  }
+  return true;
+}
+
+async function verifyCandidate(apiKey, model, repo, kind, candidate) {
+  const reviewModel = process.env.OPENAI_REVIEW_MODEL || model;
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: reviewModel,
+      temperature: 0,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: 'You are an independent quality gate for original Japanese educational practice content. You did not write the candidate. Verify every answer and explanation independently, check mathematical/data consistency, whether the answer follows from the supplied stimulus, whether exactly one option is correct, ambiguity, duplicate-like wording, subject fit, age-appropriateness, and whether the content appears to reproduce protected exam text. Return JSON only with keys approved (boolean), issues (array of concise strings), summary (string). Approve only if every check passes with high confidence; otherwise reject. Do not treat structural validity alone as sufficient.' },
+        { role: 'user', content: JSON.stringify({ repository: repo, kind, candidate }) }
+      ]
+    })
+  });
+  const body = await response.json();
+  if (!response.ok) throw new Error('Independent review API error ' + response.status + ': ' + JSON.stringify(body).slice(0, 500));
+  const content = body.choices && body.choices[0] && body.choices[0].message && body.choices[0].message.content;
+  if (!content) throw new Error('Independent review returned no content.');
+  return assertReviewApproved(parseApiJson(content));
+}
+
 function chooseLowestTopic(db) {
   const topics = Array.isArray(db.topics) ? db.topics : [];
   const questions = Array.isArray(db.questions) ? db.questions : [];
@@ -328,6 +358,10 @@ async function main() {
   const generated = await generate(apiKey, model, context);
   if (kind === 'linked-common-set') {
     const candidate = validateLinkedCommonSet(generated, items.map(item => questionText(item, kind)), stimuli, stimulusIndex);
+    await verifyCandidate(apiKey, model, repo, kind, {
+      stimulus: candidate.stimulus,
+      questions: candidate.questions.map(row => ({ question: row[0], options: row[1], answerIndex: row[2], explanation: row[3] }))
+    });
     const updatedQuestions = insertArrayItems(source, span, candidate.questions);
     const stimulusSpan = arraySpan(updatedQuestions, target.stimuliMarker);
     const updated = insertArrayItems(updatedQuestions, stimulusSpan, [candidate.stimulus]);
@@ -379,6 +413,7 @@ async function main() {
     out('changed', 'false'); out('summary', 'Generated question was duplicate/empty; no change applied.');
     return;
   }
+  await verifyCandidate(apiKey, model, repo, kind, newItem);
   const updated = insertArrayItem(source, span, newItem);
   fs.writeFileSync(filePath, updated, 'utf8');
   info('Added one original question to ' + target.file + ' (' + kind + ').');
@@ -393,4 +428,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, insertArrayItems, questionText, norm, writesEnabled };
+module.exports = { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, insertArrayItems, assertReviewApproved, questionText, norm, writesEnabled };
