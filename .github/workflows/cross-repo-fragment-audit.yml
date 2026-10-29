@@ -1,0 +1,50 @@
+name: Cross-repository HTML fragment audit
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test fragment auditor
+        run: python -m unittest tests/test_audit_html_fragments.py
+  audit-existing-repositories:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        repository:
+          - pass-juken-academy2026/math-juken-saitama
+          - pass-juken-academy2026/junior-social-studies
+          - pass-juken-academy2026/junior-japanese
+          - pass-juken-academy2026/highschool-information
+          - pass-juken-academy2026/junior-science
+          - pass-juken-academy2026/learning-portal
+          - pass-juken-academy2026/english-study
+          - pass-juken-academy2026/highschool-japanese
+          - pass-juken-academy2026/highschool-biology
+          - pass-juken-academy2026/highschool-social-studies
+          - pass-juken-academy2026/highschool-math
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repository }}
+          ref: main
+          path: target
+          persist-credentials: false
+      - name: Audit local HTML fragment links
+        run: python scripts/audit_html_fragments.py --root target
