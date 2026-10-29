@@ -111,6 +111,7 @@ function validateLinkedCommonSet(generated, existingPrompts = [], existingStimul
   const title = String(generated.stimulus.title || '').trim();
   const text = String(generated.stimulus.text || '').trim();
   if (!title || title.length > 120 || !text || text.length > 2600) throw new Error('Invalid common-test stimulus title or text.');
+  if (/[<>]/.test(title) || /[<>]/.test(text)) throw new Error('Common-test stimulus must be plain text; HTML markup is not allowed.');
   const normalizedTitle = norm(title);
   const normalizedText = norm(text);
   if (existingStimuli.some(item => norm(item && item.title) === normalizedTitle || norm(item && item.text) === normalizedText)) throw new Error('Common-test stimulus is duplicated.');
@@ -121,6 +122,7 @@ function validateLinkedCommonSet(generated, existingPrompts = [], existingStimul
     const question = String(item.question || '').trim();
     const explanation = String(item.explanation || '').trim();
     if (!question || question.length > 500 || !explanation || explanation.length > 600) throw new Error('Common-test subquestion requires a prompt and explanation.');
+    if (/[<>]/.test(question) || /[<>]/.test(explanation) || item.options.some(option => typeof option === 'string' && /[<>]/.test(option))) throw new Error('Common-test question fields must be plain text; HTML markup is not allowed.');
     const key = norm(question);
     if (seen.has(key)) throw new Error('Common-test subquestion is duplicated: ' + question.slice(0, 100));
     seen.add(key);
@@ -308,7 +310,7 @@ async function main() {
     const subjectRules = repo === 'pass-juken-academy2026/highschool-math'
       ? 'Use a coherent mathematical scenario with explicit assumptions, units, and enough conditions to derive each answer.'
       : 'Use a clearly labeled original synthetic dataset for geography/history/civics, include relevant figures or a short source excerpt in plain text, state units/time period and limitations, and never present invented figures as official real-world data.';
-    context = 'Repository: ' + repo + '. Create one original Common Test-style ' + subject + ' 大問 as a linked set. Return JSON with keys stimulus and questions. stimulus must be an object with title and text; text must include all conditions/data needed and one coherent scenario. ' + subjectRules + ' questions must contain 3 to 5 objects, each with question, options (exactly four distinct Japanese strings), answerIndex (0-3), and explanation (concise Japanese). The subquestions must all refer to the same stimulus and progress coherently rather than being unrelated small questions. Avoid ambiguous wording and do not copy official exam questions. Existing recent stimuli: ' + JSON.stringify(stimulus).slice(0, 4200) + '. Existing recent question prompts: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[0] : '')).slice(0, 3000);
+    context = 'Repository: ' + repo + '. Create one original Common Test-style ' + subject + ' 大問 as a linked set. Return JSON with keys stimulus and questions. stimulus must be an object with title and text; text must include all conditions/data needed and one coherent scenario. ' + subjectRules + ' questions must contain 3 to 5 objects, each with question, options (exactly four distinct Japanese strings), answerIndex (0-3), and explanation (concise Japanese). The subquestions must all refer to the same stimulus and progress coherently rather than being unrelated small questions. All fields must be plain text with no HTML tags or angle brackets; use Japanese words or Unicode math symbols for inequalities. Avoid ambiguous wording and do not copy official exam questions. Existing recent stimuli: ' + JSON.stringify(stimulus).slice(0, 4200) + '. Existing recent question prompts: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[0] : '')).slice(0, 3000);
   } else if (kind === 'practice-row4') {
     context = 'Repository: ' + repo + '. Add one original multiple-choice practice question to the existing four-field BANK array. Output JSON object with keys question, options, answerIndex, explanation. The question must be self-contained, accurate, and suitable for the repository subject. options must be exactly four distinct Japanese strings with one correct answer; answerIndex is an integer from 0 to 3; explanation is concise Japanese. Do not copy official exam content. Recent questions: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[0] : '')).slice(0, 4000);
   } else if (kind === 'biology-row6') {
