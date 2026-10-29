@@ -7,6 +7,8 @@ triage signals; they are not proof that questions are correct or exam-faithful.
 from __future__ import annotations
 
 import argparse
+import csv
+import hashlib
 import json
 import re
 import subprocess
@@ -138,6 +140,29 @@ def audit(repo: str, root: Path) -> dict:
     html = index.read_text(encoding="utf-8", errors="replace") if index.exists() else all_html
     question_markers = len(re.findall(r"問題|question|設問", all_html, re.I))
     data_files = [p for p in files if p.suffix.lower() in {".json", ".csv", ".tsv"}]
+    data_inventory = []
+    hash_groups = {}
+    for data_path in data_files:
+        raw = data_path.read_bytes()
+        digest = hashlib.sha256(raw).hexdigest()
+        rel = str(data_path.relative_to(target))
+        hash_groups.setdefault(digest, []).append(rel)
+        item = {"path": rel, "bytes": len(raw), "sha256": digest, "suffix": data_path.suffix.lower()}
+        try:
+            decoded = raw.decode("utf-8-sig")
+            if data_path.suffix.lower() == ".json":
+                parsed = json.loads(decoded)
+                item["json_valid"] = True
+                item["top_level_type"] = type(parsed).__name__
+                item["top_level_items"] = len(parsed) if isinstance(parsed, (list, dict)) else None
+            elif data_path.suffix.lower() in {".csv", ".tsv"}:
+                delimiter = "\\t" if data_path.suffix.lower() == ".tsv" else ","
+                item["row_count_including_header"] = sum(1 for _ in csv.reader(decoded.splitlines(), delimiter=delimiter))
+                item["csv_parse_ok"] = True
+        except Exception as exc:
+            item["parse_error"] = str(exc)[:250]
+        data_inventory.append(item)
+    identical_data_files = [paths for paths in hash_groups.values() if len(paths) > 1]
     marker_counts = {key: len(re.findall(pattern, all_html, re.I)) for key, pattern in TERMS.items()}
     return {
         "repository": repo,
@@ -145,6 +170,8 @@ def audit(repo: str, root: Path) -> dict:
         "file_count": len(files),
         "html_file_count": len(html_files),
         "data_file_count": len(data_files),
+        "data_file_inventory": data_inventory,
+        "identical_data_file_groups": identical_data_files,
         "index_html_present": index.exists(),
         "index_bytes": len(html.encode("utf-8")),
         "viewport_meta": bool(re.search(r"<meta[^>]+name=.viewport", html, re.I)),
