@@ -34,7 +34,7 @@ TERMS = {
     "common_test_mentions": r"共通テスト|大学入学共通テスト",
     "mock_exam_mentions": r"模擬テスト|模試|模擬試験",
     "print_or_pdf_mentions": r"window\.print|@media\s+print|jsPDF|html2pdf|pdf",
-    "clipboard_mentions": r"navigator\.clipboard|clipboard\.writeText|execCommand\(['\\"]copy",
+    "clipboard_mentions": r"navigator\.clipboard|clipboard\.writeText|execCommand.{0,20}copy",
     "subject_category_flow_markers": r"科目を選ぶ|科目選択|学習分野を選択|カテゴリを選択|単元を選ぶ",
     "category_card_layout_markers": r"subjectGrid|categoryGrid|menuGrid|class=.*(?:subjects|tracks|menus|category|unit)",
     "preservation_safeguard_markers": r"復習|学習履歴|お気に入り|question|bank-data|localStorage",
@@ -147,7 +147,7 @@ def audit(repo: str, root: Path) -> dict:
         "data_file_count": len(data_files),
         "index_html_present": index.exists(),
         "index_bytes": len(html.encode("utf-8")),
-        "viewport_meta": bool(re.search(r'<meta[^>]+name=[\'\"]viewport', html, re.I)),
+        "viewport_meta": bool(re.search(r"<meta[^>]+name=.viewport", html, re.I)),
         "responsive_css_marker": bool(re.search(r"@media|clamp\(|minmax\(", all_html, re.I)),
         "duplicate_html_ids": ids_by_file,
         "broken_local_reference_count": len(broken_local_refs),
@@ -156,7 +156,7 @@ def audit(repo: str, root: Path) -> dict:
         "markers": marker_counts,
         "question_related_marker_count": question_markers,
         "script_tag_count": len(re.findall(r"<script\b", all_html, re.I)),
-        "external_script_count": len(re.findall(r"<script[^>]+src=[\'\"]https?://", all_html, re.I)),
+        "external_script_count": len(re.findall(r"<script[^>]+src=.https?://", all_html, re.I)),
         "note": "Static heuristics only; dynamic routes, runtime behavior, content correctness and exam fidelity need dedicated tests.",
     }
 
