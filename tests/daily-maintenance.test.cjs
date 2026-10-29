@@ -3,23 +3,25 @@ const assert = require('node:assert/strict');
 const { targetFor, validateOptions, validateIndex, questionText, writesEnabled } = require('../scripts/daily-maintenance.cjs');
 
 const day = 20261023;
-const eligible = [
-  'pass-juken-academy2026/english-study',
-  'pass-juken-academy2026/math-juken-saitama',
-  'pass-juken-academy2026/junior-japanese',
-  'pass-juken-academy2026/junior-science',
-  'pass-juken-academy2026/junior-social-studies',
-  'pass-juken-academy2026/highschool-japanese',
-  'pass-juken-academy2026/highschool-biology',
-  'pass-juken-academy2026/highschool-information',
+const slots = [
+  ['pass-juken-academy2026/english-study', 'db-question'],
+  ['pass-juken-academy2026/english-study', 'vocabulary'],
+  ['pass-juken-academy2026/math-juken-saitama', 'db-question'],
+  ['pass-juken-academy2026/junior-japanese', 'db-question'],
+  ['pass-juken-academy2026/junior-science', 'db-question'],
+  ['pass-juken-academy2026/junior-social-studies', 'db-question'],
+  ['pass-juken-academy2026/highschool-japanese', 'japanese-case'],
+  ['pass-juken-academy2026/highschool-biology', 'biology-row4'],
+  ['pass-juken-academy2026/highschool-information', 'db-question'],
 ];
-const selected = eligible[day % eligible.length];
-assert.ok(targetFor(selected, day), 'exactly one safe target should be selected for the day');
-assert.equal(eligible.filter(repo => targetFor(repo, day)).length, 1, 'rotation should target only one repository per day');
-for (const repo of eligible) {
-  const target = targetFor(repo, day);
-  if (repo === selected) assert.ok(target.kind === 'db-question' || target.kind === 'japanese-case' || target.kind === 'biology-row4');
-  else assert.equal(target, null);
+const selected = slots[day % slots.length];
+assert.deepEqual([selected[0], targetFor(selected[0], day).kind], selected, 'daily rotation should select the expected target and kind');
+assert.equal(slots.filter(([repo]) => targetFor(repo, day)).length, 1, 'rotation should target only one approved entry');
+for (let i = 0; i < slots.length; i++) {
+  const [repo, kind] = slots[i];
+  const matches = slots.filter(([candidate]) => targetFor(candidate, i));
+  assert.equal(matches.length, 1, 'each rotation slot must target exactly one approved entry');
+  assert.deepEqual([matches[0][0], targetFor(matches[0][0], i).kind], [repo, kind], 'each supported question/vocabulary slot must be reachable');
 }
 for (const repo of [
   'pass-juken-academy2026/highschool-math',
@@ -36,6 +38,7 @@ assert.doesNotThrow(() => validateIndex(0));
 assert.doesNotThrow(() => validateIndex(3));
 assert.throws(() => validateIndex(4), /Answer index/);
 assert.equal(questionText({q:'例題'}, 'db-question'), '例題');
+assert.equal(questionText({en:'environment',jp:'環境'}, 'vocabulary'), 'environment');
 for (let i = 0; i < eligible.length; i++) {
   const dateForSlot = i;
   const matches = eligible.filter(repo => targetFor(repo, dateForSlot));
