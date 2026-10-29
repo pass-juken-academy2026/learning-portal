@@ -128,10 +128,6 @@ jobs:
       - name: Create branch and pull request only after all gates pass
         if: steps.maintenance.outputs.changed == 'true'
         working-directory: target
-        env:
-          GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
-          TARGET_REPOSITORY: ${{ matrix.repository }}
-          GH_RUN_ID: ${{ github.run_id }}
         shell: bash
         run: |
           set -euo pipefail
