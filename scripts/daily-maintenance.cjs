@@ -220,7 +220,7 @@ function assertReviewApproved(review) {
 }
 
 async function verifyCandidate(apiKey, model, repo, kind, candidate) {
-  const reviewModel = process.env.OPENAI_REVIEW_MODEL || model;
+  const reviewModel = process.env.OPENAI_REVIEW_MODEL || (model === 'gpt-4.1' ? 'gpt-4.1-mini' : 'gpt-4.1');
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
