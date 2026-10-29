@@ -106,7 +106,7 @@ function validateIndex(index) {
   if (!Number.isInteger(index) || index < 0 || index > 3) throw new Error('Answer index must be 0, 1, 2, or 3.');
 }
 
-function validateMathCommonSet(generated, existingPrompts = [], existingStimuli = [], stimulusIndex = 0) {
+function validateLinkedCommonSet(generated, existingPrompts = [], existingStimuli = [], stimulusIndex = 0) {
   if (!generated || !generated.stimulus || typeof generated.stimulus !== 'object') throw new Error('Common-test set must include a stimulus object.');
   const title = String(generated.stimulus.title || '').trim();
   const text = String(generated.stimulus.text || '').trim();
@@ -155,8 +155,9 @@ function targetFor(repo, day) {
     { repo: 'pass-juken-academy2026/highschool-biology', target: { file: 'index.html', kind: 'biology-row4', marker: 'qs:' } },
     { repo: 'pass-juken-academy2026/highschool-information', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/highschool-math', target: { file: 'practice.html', kind: 'practice-row4', marker: 'const BANK=' } },
-    { repo: 'pass-juken-academy2026/highschool-math', target: { file: 'practice.html', kind: 'math-common-set', marker: 'const COMMON_TEST=', stimuliMarker: 'const COMMON_STIMULI=' } },
-    { repo: 'pass-juken-academy2026/highschool-social-studies', target: { file: 'practice.html', kind: 'practice-row4', marker: 'const BANK=' } }
+    { repo: 'pass-juken-academy2026/highschool-math', target: { file: 'practice.html', kind: 'linked-common-set', marker: 'const COMMON_TEST=', stimuliMarker: 'const COMMON_STIMULI=' } },
+    { repo: 'pass-juken-academy2026/highschool-social-studies', target: { file: 'practice.html', kind: 'practice-row4', marker: 'const BANK=' } },
+    { repo: 'pass-juken-academy2026/highschool-social-studies', target: { file: 'practice.html', kind: 'linked-common-set', marker: 'const COMMON_TEST=', stimuliMarker: 'const COMMON_STIMULI=' } }
   ];
   const selected = rotation[Math.abs(Number(day) || 0) % rotation.length];
   return selected && repo === selected.repo ? selected.target : null;
@@ -274,7 +275,7 @@ async function main() {
     span = arraySpan(source, target.marker);
     items = parseItems(source, span);
     sampleItems = items.slice(-8);
-    if (kind === 'math-common-set') {
+    if (kind === 'linked-common-set') {
       const stimSpan = arraySpan(source, target.stimuliMarker);
       stimuli = JSON.parse(source.slice(stimSpan.open, stimSpan.close + 1));
       stimulusIndex = stimuli.length;
@@ -302,8 +303,12 @@ async function main() {
     context = 'Repository: ' + repo + '. Add exactly one original multiple-choice question to the existing DB.questions array. Output JSON object with keys topic, q, options, a, ex. topic must be exactly "' + topic + '". options must have exactly four Japanese strings; a is a zero-based integer from 0 to 3; ex is a concise Japanese explanation. Use existing topics only. Existing topics and counts: ' + JSON.stringify(db.topics.map(t => ({ name: t.name, count: (db.questions || []).filter(q => q.topic === t.name).length }))) + '. Recent questions: ' + JSON.stringify(sampleItems.map(x => ({ topic: x.topic, q: x.q, options: x.options, a: x.a }))).slice(0, 4500);
   } else if (kind === 'japanese-case') {
     context = 'Repository: ' + repo + '. Add one original question to an existing high-school Japanese common-test passage. Output JSON object with keys q, c, a, e. c must be exactly four Japanese options; a is a zero-based index 0-3; e is a concise Japanese explanation. The existing passage is: ' + JSON.stringify(stimulus) + '. Recent questions in this passage: ' + JSON.stringify(sampleItems.map(x => x.q)).slice(0, 2500);
-  } else if (kind === 'math-common-set') {
-    context = 'Repository: ' + repo + '. Create one original Common Test-style mathematics 大問 as a linked set. Return JSON with keys stimulus and questions. stimulus must be an object with title and text; text must give all conditions/data needed, be mathematically consistent, and create one coherent real-world or mathematical scenario. questions must contain 3 to 5 objects, each with question, options (exactly four distinct Japanese strings), answerIndex (0-3), and explanation (concise Japanese). The subquestions must all refer to the same stimulus and progress coherently rather than being unrelated small questions. State units and assumptions, avoid ambiguous wording, and do not copy official exam questions. Existing recent stimuli: ' + JSON.stringify(stimulus).slice(0, 4200) + '. Existing recent question prompts: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[0] : '')).slice(0, 3000);
+  } else if (kind === 'linked-common-set') {
+    const subject = repo === 'pass-juken-academy2026/highschool-math' ? '高校数学' : '高校地理・歴史・公民';
+    const subjectRules = repo === 'pass-juken-academy2026/highschool-math'
+      ? 'Use a coherent mathematical scenario with explicit assumptions, units, and enough conditions to derive each answer.'
+      : 'Use a clearly labeled original synthetic dataset for geography/history/civics, include relevant figures or a short source excerpt in plain text, state units/time period and limitations, and never present invented figures as official real-world data.';
+    context = 'Repository: ' + repo + '. Create one original Common Test-style ' + subject + ' 大問 as a linked set. Return JSON with keys stimulus and questions. stimulus must be an object with title and text; text must include all conditions/data needed and one coherent scenario. ' + subjectRules + ' questions must contain 3 to 5 objects, each with question, options (exactly four distinct Japanese strings), answerIndex (0-3), and explanation (concise Japanese). The subquestions must all refer to the same stimulus and progress coherently rather than being unrelated small questions. Avoid ambiguous wording and do not copy official exam questions. Existing recent stimuli: ' + JSON.stringify(stimulus).slice(0, 4200) + '. Existing recent question prompts: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[0] : '')).slice(0, 3000);
   } else if (kind === 'practice-row4') {
     context = 'Repository: ' + repo + '. Add one original multiple-choice practice question to the existing four-field BANK array. Output JSON object with keys question, options, answerIndex, explanation. The question must be self-contained, accurate, and suitable for the repository subject. options must be exactly four distinct Japanese strings with one correct answer; answerIndex is an integer from 0 to 3; explanation is concise Japanese. Do not copy official exam content. Recent questions: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[0] : '')).slice(0, 4000);
   } else if (kind === 'biology-row6') {
@@ -319,8 +324,8 @@ async function main() {
   }
 
   const generated = await generate(apiKey, model, context);
-  if (kind === 'math-common-set') {
-    const candidate = validateMathCommonSet(generated, items.map(item => questionText(item, kind)), stimuli, stimulusIndex);
+  if (kind === 'linked-common-set') {
+    const candidate = validateLinkedCommonSet(generated, items.map(item => questionText(item, kind)), stimuli, stimulusIndex);
     const updatedQuestions = insertArrayItems(source, span, candidate.questions);
     const stimulusSpan = arraySpan(updatedQuestions, target.stimuliMarker);
     const updated = insertArrayItems(updatedQuestions, stimulusSpan, [candidate.stimulus]);
@@ -386,4 +391,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { targetFor, validateOptions, validateIndex, validateMathCommonSet, questionText, norm, writesEnabled };
+module.exports = { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, questionText, norm, writesEnabled };
