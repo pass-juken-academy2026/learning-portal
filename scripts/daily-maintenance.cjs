@@ -85,6 +85,7 @@ function parseApiJson(content) {
 }
 
 function questionText(item, kind) {
+  if (kind === 'vocabulary') return item && item.en || '';
   if (kind === 'english-listening') return item && item.question || '';
   if (kind === 'social-row6') return Array.isArray(item) ? item[1] || '' : '';
   if (kind === 'japanese-case' || kind === 'db-question') return item && item.q || '';
@@ -112,13 +113,16 @@ function targetFor(repo, day) {
   // validation-only until they have a separate candidate bank and group-aware sampler.
   const rotation = [
     { repo: 'pass-juken-academy2026/english-study', target: { file: 'index.html', kind: 'db-question' } },
+    { repo: 'pass-juken-academy2026/english-study', target: { file: 'index.html', kind: 'vocabulary', marker: 'const vocab=' } },
     { repo: 'pass-juken-academy2026/math-juken-saitama', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/junior-japanese', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/junior-science', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/junior-social-studies', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/highschool-japanese', target: { file: 'index.html', kind: 'japanese-case' } },
     { repo: 'pass-juken-academy2026/highschool-biology', target: { file: 'index.html', kind: 'biology-row4', marker: 'qs:' } },
-    { repo: 'pass-juken-academy2026/highschool-information', target: { file: 'index.html', kind: 'db-question' } }
+    { repo: 'pass-juken-academy2026/highschool-information', target: { file: 'index.html', kind: 'db-question' } },
+    { repo: 'pass-juken-academy2026/highschool-math', target: { file: 'practice.html', kind: 'practice-row4', marker: 'const BANK=' } },
+    { repo: 'pass-juken-academy2026/highschool-social-studies', target: { file: 'practice.html', kind: 'practice-row4', marker: 'const BANK=' } }
   ];
   const selected = rotation[Math.abs(Number(day) || 0) % rotation.length];
   return selected && repo === selected.repo ? selected.target : null;
@@ -215,6 +219,10 @@ async function main() {
     db = parsed.db; span = parsed.questionSpan; items = db.questions || [];
     topic = chooseLowestTopic(db);
     sampleItems = items.slice(-8);
+  } else if (kind === 'vocabulary') {
+    span = arraySpan(source, target.marker);
+    items = parseItems(source, span);
+    sampleItems = items.slice(-12);
   } else if (kind === 'japanese-case') {
     span = japaneseQuestionSpan(source, day);
     const rawItems = splitTopLevelItems(source, span.open, span.close);
@@ -245,13 +253,18 @@ async function main() {
   }
 
   const existing = new Set(items.map(item => norm(questionText(item, kind))).filter(Boolean));
+  const existingJapanese = new Set(kind === 'vocabulary' ? items.map(item => norm(item && item.jp)).filter(Boolean) : []);
   let context = '';
-  if (kind === 'english-listening') {
+  if (kind === 'vocabulary') {
+    context = 'Repository: ' + repo + '. Add exactly one original English vocabulary item to the existing vocab array. Output JSON object with keys jp, en, distractors, level. jp must be a concise accurate Japanese meaning; en must be one English word or short lexical phrase suitable for high-school entrance/common-test preparation; distractors must be exactly three distinct plausible English words of the same part of speech and must not equal en; level must be an integer from 35 to 75. Do not use proper names, offensive content, or duplicate existing terms/translations. Recent existing items: ' + JSON.stringify(sampleItems.map(x => ({ jp: x.jp, en: x.en, distractors: x.distractors, level: x.level }))).slice(0, 6000);
+  } else if (kind === 'english-listening') {
     context = 'Repository: ' + repo + '. Add exactly one new item to the existing English common-test listening bank. Output JSON object with keys title, audioText, question, options, answer, explain. audioText must be a short original English announcement/dialogue suitable for browser speech synthesis; question is in English; options is exactly 4 English strings; answer must exactly match one option; explain is a concise Japanese explanation. Do not use an official exam script. Existing recent questions: ' + JSON.stringify(sampleItems.map(x => ({ title: x.title, audioText: x.audioText, question: x.question, options: x.options, answer: x.answer }))).slice(0, 6500);
   } else if (kind === 'db-question') {
     context = 'Repository: ' + repo + '. Add exactly one original multiple-choice question to the existing DB.questions array. Output JSON object with keys topic, q, options, a, ex. topic must be exactly "' + topic + '". options must have exactly four Japanese strings; a is a zero-based integer from 0 to 3; ex is a concise Japanese explanation. Use existing topics only. Existing topics and counts: ' + JSON.stringify(db.topics.map(t => ({ name: t.name, count: (db.questions || []).filter(q => q.topic === t.name).length }))) + '. Recent questions: ' + JSON.stringify(sampleItems.map(x => ({ topic: x.topic, q: x.q, options: x.options, a: x.a }))).slice(0, 4500);
   } else if (kind === 'japanese-case') {
     context = 'Repository: ' + repo + '. Add one original question to an existing high-school Japanese common-test passage. Output JSON object with keys q, c, a, e. c must be exactly four Japanese options; a is a zero-based index 0-3; e is a concise Japanese explanation. The existing passage is: ' + JSON.stringify(stimulus) + '. Recent questions in this passage: ' + JSON.stringify(sampleItems.map(x => x.q)).slice(0, 2500);
+  } else if (kind === 'practice-row4') {
+    context = 'Repository: ' + repo + '. Add one original multiple-choice practice question to the existing four-field BANK array. Output JSON object with keys question, options, answerIndex, explanation. The question must be self-contained, accurate, and suitable for the repository subject. options must be exactly four distinct Japanese strings with one correct answer; answerIndex is an integer from 0 to 3; explanation is concise Japanese. Do not copy official exam content. Recent questions: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[0] : '')).slice(0, 4000);
   } else if (kind === 'biology-row6') {
     context = 'Repository: ' + repo + '. Add one original biology common-test question based on this existing stimulus: ' + String(stimulus || '').slice(0, 2200) + '. Output JSON object with keys question, options, answerIndex, explanation. options must be four Japanese strings; answerIndex is 0-3; explanation is concise Japanese. Recent questions: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[1] : '')).slice(0, 3000);
   } else if (kind === 'biology-row4') {
@@ -266,7 +279,17 @@ async function main() {
 
   const generated = await generate(apiKey, model, context);
   let newItem;
-  if (kind === 'english-listening') {
+  if (kind === 'vocabulary') {
+    const en = String(generated.en || '').trim();
+    const jp = String(generated.jp || '').trim();
+    const distractors = generated.distractors;
+    if (!en || !jp || en.length > 80 || jp.length > 120) throw new Error('Invalid vocabulary term or translation.');
+    if (!Array.isArray(distractors) || distractors.length !== 3 || distractors.some(x => typeof x !== 'string' || !x.trim())) throw new Error('Vocabulary distractors must contain exactly three non-empty strings.');
+    const choices = [en, ...distractors.map(x => String(x).trim())].map(norm);
+    if (new Set(choices).size !== 4) throw new Error('Vocabulary answer and distractors must be unique.');
+    if (!Number.isInteger(generated.level) || generated.level < 35 || generated.level > 75) throw new Error('Vocabulary level must be an integer from 35 to 75.');
+    newItem = { id: 'v-auto-' + date.replace(/-/g, '') + '-' + (items.length + 1), jp, en, distractors: distractors.map(x => String(x).trim()), level: generated.level };
+  } else if (kind === 'english-listening') {
     validateOptions(generated.options);
     if (!generated.answer || !generated.options.includes(generated.answer) || !generated.audioText || !generated.question || !generated.explain) throw new Error('Invalid English listening item.');
     newItem = { id: 'ct-listen-auto-' + date.replace(/-/g, '') + '-' + (items.length + 1), examType: 'common-listening', title: String(generated.title || '追加リスニング問題').slice(0, 100), audioText: String(generated.audioText).slice(0, 900), question: String(generated.question).slice(0, 350), options: generated.options.map(String), answer: String(generated.answer), explain: String(generated.explain).slice(0, 500) };
@@ -283,7 +306,7 @@ async function main() {
     if (!generated.question || !generated.explanation) throw new Error('Invalid generated question.');
     const prompt = String(generated.question).slice(0, 500);
     if (kind === 'biology-row6') newItem = ['ct-bio-auto-' + date.replace(/-/g, '') + '-' + (items.length + 1), prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500), String(stimulus || '')];
-    else if (kind === 'biology-row4') newItem = [prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500)];
+    else if (kind === 'biology-row4' || kind === 'practice-row4') newItem = [prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500)];
     else if (kind === 'social-row6') newItem = [String(generated.topic || '地理').slice(0, 40), prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500), String(generated.category || '資料読解').slice(0, 60)];
     else if (kind === 'science-row5') {
       const prefix = target.file.startsWith('chemistry/') ? 'ct-chem-auto-' : target.file.startsWith('physics/') ? 'ct-phys-auto-' : target.file.startsWith('earth-science/') ? 'ct-earth-auto-' : 'ct-sci-auto-';
@@ -293,7 +316,7 @@ async function main() {
   }
 
   const newPrompt = norm(questionText(newItem, kind));
-  if (!newPrompt || existing.has(newPrompt)) {
+  if (!newPrompt || existing.has(newPrompt) || (kind === 'vocabulary' && existingJapanese.has(norm(newItem.jp)))) {
     info('Generated question was empty or duplicated; no change made.');
     out('changed', 'false'); out('summary', 'Generated question was duplicate/empty; no change applied.');
     return;
