@@ -114,7 +114,8 @@ function targetFor(repo, day) {
     { repo: 'pass-juken-academy2026/junior-japanese', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/junior-science', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/junior-social-studies', target: { file: 'index.html', kind: 'db-question' } },
-    { repo: 'pass-juken-academy2026/highschool-japanese', target: { file: 'index.html', kind: 'japanese-case' } }
+    { repo: 'pass-juken-academy2026/highschool-japanese', target: { file: 'index.html', kind: 'japanese-case' } },
+    { repo: 'pass-juken-academy2026/highschool-biology', target: { file: 'index.html', kind: 'biology-row4', marker: 'qs: [' } }
   ];
   const selected = rotation[Math.abs(Number(day) || 0) % rotation.length];
   return selected && repo === selected.repo ? selected.target : null;
@@ -250,6 +251,8 @@ async function main() {
     context = 'Repository: ' + repo + '. Add one original question to an existing high-school Japanese common-test passage. Output JSON object with keys q, c, a, e. c must be exactly four Japanese options; a is a zero-based index 0-3; e is a concise Japanese explanation. The existing passage is: ' + JSON.stringify(stimulus) + '. Recent questions in this passage: ' + JSON.stringify(sampleItems.map(x => x.q)).slice(0, 2500);
   } else if (kind === 'biology-row6') {
     context = 'Repository: ' + repo + '. Add one original biology common-test question based on this existing stimulus: ' + String(stimulus || '').slice(0, 2200) + '. Output JSON object with keys question, options, answerIndex, explanation. options must be four Japanese strings; answerIndex is 0-3; explanation is concise Japanese. Recent questions: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[1] : '')).slice(0, 3000);
+  } else if (kind === 'biology-row4') {
+    context = 'Repository: ' + repo + '. Add one original high-school biology practice question in the existing four-field row format. Output JSON object with keys question, options, answerIndex, explanation. question must be self-contained and factually accurate; options must be exactly four Japanese strings with one correct answer; answerIndex is 0-3; explanation is concise Japanese. Recent questions: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[0] : '')).slice(0, 2800);
   } else if (kind === 'science-row5') {
     context = 'Repository: ' + repo + ', target file ' + target.file + '. Add one original question appropriate to the existing subject common-test practice. Each question prompt must contain enough original context/data to be answerable by itself. Output JSON object with keys question, options, answerIndex, explanation. options must be four Japanese strings; answerIndex is 0-3; explanation is concise Japanese. Recent questions: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[1] : '')).slice(0, 3200);
   } else if (kind === 'stimulus-row5') {
@@ -277,6 +280,7 @@ async function main() {
     if (!generated.question || !generated.explanation) throw new Error('Invalid generated question.');
     const prompt = String(generated.question).slice(0, 500);
     if (kind === 'biology-row6') newItem = ['ct-bio-auto-' + date.replace(/-/g, '') + '-' + (items.length + 1), prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500), String(stimulus || '')];
+    else if (kind === 'biology-row4') newItem = [prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500)];
     else if (kind === 'science-row5') {
       const prefix = target.file.startsWith('chemistry/') ? 'ct-chem-auto-' : target.file.startsWith('physics/') ? 'ct-phys-auto-' : target.file.startsWith('earth-science/') ? 'ct-earth-auto-' : 'ct-sci-auto-';
       newItem = [prefix + date.replace(/-/g, '') + '-' + (items.length + 1), prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500)];
