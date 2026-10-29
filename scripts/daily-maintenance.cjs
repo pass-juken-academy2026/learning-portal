@@ -144,8 +144,8 @@ function insertArrayItems(source, span, items) {
 function writesEnabled(value) { return value === 'true'; }
 
 function targetFor(repo, day) {
-  // Add only to explicit, schema-aware targets. Common-test math is appended as a
-  // complete stimulus plus linked subquestions, never as a lone orphaned subquestion.
+  // Add only to explicit, schema-aware targets. Common-test sets are appended as a
+  // complete stimulus plus linked subquestions, never as lone orphaned subquestions.
   const rotation = [
     { repo: 'pass-juken-academy2026/english-study', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/english-study', target: { file: 'index.html', kind: 'vocabulary', marker: 'const vocab=' } },
