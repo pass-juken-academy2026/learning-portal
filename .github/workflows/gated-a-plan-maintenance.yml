@@ -157,7 +157,7 @@ jobs:
                       self.in_script=False
           import os
           target=os.environ.get('TARGET_REPOSITORY','')
-          filename='practice.html' if target=='pass-juken-academy2026/highschool-math' else 'index.html'
+          filename='practice.html' if target in ('pass-juken-academy2026/highschool-math','pass-juken-academy2026/highschool-social-studies') else 'index.html'
           path=Path(filename)
           parser=Audit(); parser.feed(path.read_text(encoding='utf-8'))
           duplicates=[key for key,count in Counter(parser.ids).items() if count>1]
