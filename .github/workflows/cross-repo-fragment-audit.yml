@@ -1,5 +1,7 @@
 name: Cross-repository HTML fragment audit
 on:
+  schedule:
+    - cron: '15 20 * * *'
   pull_request:
   push:
     branches: [main]
