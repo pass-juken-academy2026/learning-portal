@@ -83,7 +83,8 @@ def self_test():
     assert parser.buttons == 1 and parser.selects == 1
     assert len(REPOS) == 11 and len(set(REPOS)) == 11
     assert len(re.findall(TERMS["common_test_mentions"], "共通テスト 模試")) == 1
-    print("Self-test passed: HTML markers, asset references, and fixed 11-repository scope.")
+    assert list(csv.reader(["a\tb"], delimiter="\t")) == [["a", "b"]]
+    print("Self-test passed: HTML markers, asset references, TSV delimiter, and fixed 11-repository scope.")
 
 def local_target(repo_root: Path, source: Path, raw_url: str):
     """Return an in-repo target for a relative URL; ignore external/dynamic URLs."""
@@ -156,7 +157,7 @@ def audit(repo: str, root: Path) -> dict:
                 item["top_level_type"] = type(parsed).__name__
                 item["top_level_items"] = len(parsed) if isinstance(parsed, (list, dict)) else None
             elif data_path.suffix.lower() in {".csv", ".tsv"}:
-                delimiter = "\\t" if data_path.suffix.lower() == ".tsv" else ","
+                delimiter = "\t" if data_path.suffix.lower() == ".tsv" else ","
                 item["row_count_including_header"] = sum(1 for _ in csv.reader(decoded.splitlines(), delimiter=delimiter))
                 item["csv_parse_ok"] = True
         except Exception as exc:
