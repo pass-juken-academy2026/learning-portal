@@ -23,7 +23,7 @@ for (const repo of eligible) {
 }
 for (const repo of [
   'pass-juken-academy2026/highschool-math',
-  'pass-juken-academy2026/highschool-math',
+  'pass-juken-academy2026/highschool-social-studies',
   'pass-juken-academy2026/learning-portal'
 ]) assert.equal(targetFor(repo, day), null, repo + ' must stay validation-only');
 assert.equal(writesEnabled(undefined), false, 'writes must be disabled by default');
