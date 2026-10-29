@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "25 20 * * *"
   workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/gated-a-plan-maintenance.yml"
+      - "scripts/daily-maintenance.cjs"
+      - "tests/daily-maintenance.test.cjs"
 
 permissions:
   contents: read
@@ -13,6 +18,19 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  validate-workflow:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate workflow YAML syntax
+        run: ruby -e "require 'yaml'; YAML.parse_file('.github/workflows/gated-a-plan-maintenance.yml'); puts 'Workflow YAML syntax passed.'"
+      - name: Test A-plan maintenance safety gates
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node tests/daily-maintenance.test.cjs
+
   maintain:
     if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
