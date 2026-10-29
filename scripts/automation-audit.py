@@ -23,6 +23,9 @@ TERMS = {
     "mock_exam_mentions": r"模擬テスト|模試|模擬試験",
     "print_or_pdf_mentions": r"window\.print|@media\s+print|jsPDF|html2pdf|pdf",
     "clipboard_mentions": r"navigator\.clipboard|clipboard\.writeText|execCommand\(['\"]copy",
+    "subject_category_flow_markers": r"科目を選ぶ|科目選択|学習分野を選択|カテゴリを選択|単元を選ぶ",
+    "category_card_layout_markers": r"subjectGrid|categoryGrid|menuGrid|class=.*(?:subjects|tracks|menus|category|unit)",
+    "preservation_safeguard_markers": r"復習|学習履歴|お気に入り|question|bank-data|localStorage",
 }
 
 def audit(repo: str, root: Path) -> dict:
