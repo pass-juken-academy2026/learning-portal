@@ -12,14 +12,13 @@ const eligible = [
   'pass-juken-academy2026/highschool-japanese',
   'pass-juken-academy2026/highschool-biology',
   'pass-juken-academy2026/highschool-information',
-  'pass-juken-academy2026/highschool-social-studies'
 ];
 const selected = eligible[day % eligible.length];
 assert.ok(targetFor(selected, day), 'exactly one safe target should be selected for the day');
 assert.equal(eligible.filter(repo => targetFor(repo, day)).length, 1, 'rotation should target only one repository per day');
 for (const repo of eligible) {
   const target = targetFor(repo, day);
-  if (repo === selected) assert.ok(target.kind === 'db-question' || target.kind === 'japanese-case' || target.kind === 'biology-row4' || target.kind === 'social-row6');
+  if (repo === selected) assert.ok(target.kind === 'db-question' || target.kind === 'japanese-case' || target.kind === 'biology-row4');
   else assert.equal(target, null);
 }
 for (const repo of [
@@ -37,7 +36,6 @@ assert.doesNotThrow(() => validateIndex(0));
 assert.doesNotThrow(() => validateIndex(3));
 assert.throws(() => validateIndex(4), /Answer index/);
 assert.equal(questionText({q:'例題'}, 'db-question'), '例題');
-assert.equal(questionText(['地理','資料から読み取れることは？',['A','B','C','D'],0,'解説','資料読解'], 'social-row6'), '資料から読み取れることは？');
 for (let i = 0; i < eligible.length; i++) {
   const dateForSlot = i;
   const matches = eligible.filter(repo => targetFor(repo, dateForSlot));
