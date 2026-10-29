@@ -4,12 +4,14 @@ const { targetFor, validateOptions, validateIndex, questionText, writesEnabled }
 
 const day = 20261027;
 const eligible = [
+  'pass-juken-academy2026/english-study',
   'pass-juken-academy2026/math-juken-saitama',
   'pass-juken-academy2026/junior-japanese',
   'pass-juken-academy2026/junior-science',
   'pass-juken-academy2026/junior-social-studies',
   'pass-juken-academy2026/highschool-japanese',
-  'pass-juken-academy2026/highschool-biology'
+  'pass-juken-academy2026/highschool-biology',
+  'pass-juken-academy2026/highschool-information'
 ];
 const selected = eligible[day % eligible.length];
 assert.ok(targetFor(selected, day), 'exactly one safe target should be selected for the day');
