@@ -185,7 +185,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
           expected_file="index.html"
-          if [ "$TARGET_REPOSITORY" = "pass-juken-academy2026/highschool-math" ]; then expected_file="practice.html"; fi
+          if [ "$TARGET_REPOSITORY" = "pass-juken-academy2026/highschool-math" ] || [ "$TARGET_REPOSITORY" = "pass-juken-academy2026/highschool-social-studies" ]; then expected_file="practice.html"; fi
           git add "$expected_file"
           git commit -m "Add one validated original practice question"
           git push origin "$branch"
