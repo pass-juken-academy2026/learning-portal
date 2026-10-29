@@ -13,6 +13,8 @@ const slots = [
   ['pass-juken-academy2026/highschool-japanese', 'japanese-case'],
   ['pass-juken-academy2026/highschool-biology', 'biology-row4'],
   ['pass-juken-academy2026/highschool-information', 'db-question'],
+  ['pass-juken-academy2026/highschool-math', 'practice-row4'],
+  ['pass-juken-academy2026/highschool-social-studies', 'practice-row4'],
 ];
 const selected = slots[day % slots.length];
 assert.deepEqual([selected[0], targetFor(selected[0], day).kind], selected, 'daily rotation should select the expected target and kind');
@@ -25,7 +27,6 @@ for (let i = 0; i < slots.length; i++) {
 }
 for (const repo of [
   'pass-juken-academy2026/highschool-math',
-  'pass-juken-academy2026/highschool-social-studies',
   'pass-juken-academy2026/learning-portal'
 ]) assert.equal(targetFor(repo, day), null, repo + ' must stay validation-only');
 assert.equal(writesEnabled(undefined), false, 'writes must be disabled by default');
