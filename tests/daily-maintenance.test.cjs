@@ -52,6 +52,7 @@ const commonSet = {
 const checkedSet = validateLinkedCommonSet(commonSet, [], [], 4);
 assert.equal(checkedSet.questions.length, 3);
 assert.equal(checkedSet.stimulus.table, '', 'generated stimuli must provide a safe empty table field when no table markup is supplied');
+assert.throws(() => validateLinkedCommonSet({ ...commonSet, stimulus: { ...commonSet.stimulus, text: '<script>alert(1)</script>' } }, [], [], 0), /plain text/);
 assert.equal(checkedSet.questions[2][4], 4, 'all subquestions must reference the newly appended stimulus');
 assert.throws(() => validateLinkedCommonSet({ ...commonSet, questions: commonSet.questions.slice(0, 2) }, [], [], 0), /3 to 5/);
 assert.throws(() => validateLinkedCommonSet(commonSet, ['商品Aを2個売った売上は？'], [], 0), /duplicated/);
