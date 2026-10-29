@@ -33,8 +33,8 @@ REPOS = [
 TERMS = {
     "common_test_mentions": r"共通テスト|大学入学共通テスト",
     "mock_exam_mentions": r"模擬テスト|模試|模擬試験",
-    "print_or_pdf_mentions": r"window\\.print|@media\\s+print|jsPDF|html2pdf|pdf",
-    "clipboard_mentions": r"navigator\\.clipboard|clipboard\\.writeText|execCommand\\(['\\\"]copy",
+    "print_or_pdf_mentions": r"window\.print|@media\s+print|jsPDF|html2pdf|pdf",
+    "clipboard_mentions": r"navigator\.clipboard|clipboard\.writeText|execCommand\(['\\"]copy",
     "subject_category_flow_markers": r"科目を選ぶ|科目選択|学習分野を選択|カテゴリを選択|単元を選ぶ",
     "category_card_layout_markers": r"subjectGrid|categoryGrid|menuGrid|class=.*(?:subjects|tracks|menus|category|unit)",
     "preservation_safeguard_markers": r"復習|学習履歴|お気に入り|question|bank-data|localStorage",
@@ -133,7 +133,7 @@ def audit(repo: str, root: Path) -> dict:
             local = local_target(target, path, raw)
             if local is not None and not local.exists():
                 broken_local_refs.append({"file": str(path.relative_to(target)), "reference": raw})
-    all_html = "\\n".join(all_html_parts)
+    all_html = "\n".join(all_html_parts)
     index = target / "index.html"
     html = index.read_text(encoding="utf-8", errors="replace") if index.exists() else all_html
     question_markers = len(re.findall(r"問題|question|設問", all_html, re.I))
@@ -147,16 +147,16 @@ def audit(repo: str, root: Path) -> dict:
         "data_file_count": len(data_files),
         "index_html_present": index.exists(),
         "index_bytes": len(html.encode("utf-8")),
-        "viewport_meta": bool(re.search(r'<meta[^>]+name=[\\'\\"]viewport', html, re.I)),
-        "responsive_css_marker": bool(re.search(r"@media|clamp\\(|minmax\\(", all_html, re.I)),
+        "viewport_meta": bool(re.search(r'<meta[^>]+name=[\'\"]viewport', html, re.I)),
+        "responsive_css_marker": bool(re.search(r"@media|clamp\(|minmax\(", all_html, re.I)),
         "duplicate_html_ids": ids_by_file,
         "broken_local_reference_count": len(broken_local_refs),
         "broken_local_references": broken_local_refs[:100],
         "structural_counts": dict(structural),
         "markers": marker_counts,
         "question_related_marker_count": question_markers,
-        "script_tag_count": len(re.findall(r"<script\\b", all_html, re.I)),
-        "external_script_count": len(re.findall(r"<script[^>]+src=[\\'\\"]https?://", all_html, re.I)),
+        "script_tag_count": len(re.findall(r"<script\b", all_html, re.I)),
+        "external_script_count": len(re.findall(r"<script[^>]+src=[\'\"]https?://", all_html, re.I)),
         "note": "Static heuristics only; dynamic routes, runtime behavior, content correctness and exam fidelity need dedicated tests.",
     }
 
@@ -213,7 +213,7 @@ def main():
         "- Browser-level interaction, responsive layout, print/PDF, copy, answer correctness, copyright, and exam-format checks remain separate gates.",
         "",
     ]
-    (out / "audit.md").write_text("\\n".join(lines), encoding="utf-8")
+    (out / "audit.md").write_text("\n".join(lines), encoding="utf-8")
     print((out / "audit.md").read_text(encoding="utf-8"))
     if report["summary"]["failed"]:
         raise SystemExit(f"Audit incomplete: {report['summary']['failed']} repositories failed; see audit artifact.")
