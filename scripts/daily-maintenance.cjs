@@ -393,4 +393,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, questionText, norm, writesEnabled };
+module.exports = { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, insertArrayItems, questionText, norm, writesEnabled };
