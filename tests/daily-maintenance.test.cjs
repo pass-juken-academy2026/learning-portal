@@ -16,10 +16,10 @@ const slots = [
 ];
 const selected = slots[day % slots.length];
 assert.deepEqual([selected[0], targetFor(selected[0], day).kind], selected, 'daily rotation should select the expected target and kind');
-assert.equal(slots.filter(([repo]) => targetFor(repo, day)).length, 1, 'rotation should target only one approved entry');
+assert.equal(slots.filter(([repo, kind]) => { const target = targetFor(repo, day); return target && target.kind === kind; }).length, 1, 'rotation should target only one approved entry');
 for (let i = 0; i < slots.length; i++) {
   const [repo, kind] = slots[i];
-  const matches = slots.filter(([candidate]) => targetFor(candidate, i));
+  const matches = slots.filter(([candidate, candidateKind]) => { const target = targetFor(candidate, i); return target && target.kind === candidateKind; });
   assert.equal(matches.length, 1, 'each rotation slot must target exactly one approved entry');
   assert.deepEqual([matches[0][0], targetFor(matches[0][0], i).kind], [repo, kind], 'each supported question/vocabulary slot must be reachable');
 }
