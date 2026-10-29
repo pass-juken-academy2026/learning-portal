@@ -97,6 +97,7 @@ jobs:
           A_PLAN_WRITE_ENABLED: ${{ secrets.A_PLAN_WRITE_ENABLED }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          OPENAI_REVIEW_MODEL: ${{ vars.OPENAI_REVIEW_MODEL }}
           CROSS_REPO_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
         shell: bash
         run: |

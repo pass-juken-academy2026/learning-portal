@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, insertArrayItems, questionText, writesEnabled } = require('../scripts/daily-maintenance.cjs');
+const { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, insertArrayItems, assertReviewApproved, reviewPayload, questionText, writesEnabled } = require('../scripts/daily-maintenance.cjs');
 
 const day = 20261023;
 const slots = [
@@ -34,6 +34,13 @@ assert.equal(writesEnabled(undefined), false, 'writes must be disabled by defaul
 assert.equal(writesEnabled('false'), false, 'false must not enable writes');
 assert.equal(writesEnabled('TRUE'), false, 'only the exact string true enables writes');
 assert.equal(writesEnabled('true'), true, 'explicit opt-in enables the gate');
+assert.doesNotThrow(() => assertReviewApproved({ approved: true, issues: [], summary: 'All answer keys independently checked.' }));
+assert.throws(() => assertReviewApproved({ approved: false, issues: ['Answer index is incorrect.'], summary: 'Rejected.' }), /did not approve/);
+assert.throws(() => assertReviewApproved({ approved: true, issues: ['Ambiguous wording.'], summary: 'Rejected.' }), /did not approve/);
+assert.throws(() => assertReviewApproved({ approved: true, summary: 'Missing issues list.' }), /did not approve/);
+assert.deepEqual(reviewPayload('japanese-case', { q: '問', c: ['A','B','C','D'], a: 1, e: '理由' }, '本文'), { passage: '本文', question: '問', options: ['A','B','C','D'], answerIndex: 1, explanation: '理由' });
+assert.deepEqual(reviewPayload('practice-row4', ['問', ['A','B','C','D'], 2, '解説'], null), { question: '問', options: ['A','B','C','D'], answerIndex: 2, explanation: '解説', stimulus: null });
+assert.deepEqual(reviewPayload('vocabulary', { en: 'decide', jp: '決定する', distractors: ['describe','deliver','discover'], level: 45 }), { englishWord: 'decide', japaneseMeaning: '決定する', distractors: ['describe','deliver','discover'], level: 45 });
 assert.doesNotThrow(() => validateOptions(['A','B','C','D']));
 assert.throws(() => validateOptions(['A','A','C','D']), /unique/);
 assert.doesNotThrow(() => validateIndex(0));
