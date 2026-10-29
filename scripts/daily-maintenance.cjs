@@ -86,6 +86,7 @@ function parseApiJson(content) {
 
 function questionText(item, kind) {
   if (kind === 'english-listening') return item && item.question || '';
+  if (kind === 'social-row6') return Array.isArray(item) ? item[1] || '' : '';
   if (kind === 'japanese-case' || kind === 'db-question') return item && item.q || '';
   if (Array.isArray(item)) {
     if (kind === 'biology-row6' || kind === 'science-row5') return item[1] || '';
@@ -118,6 +119,7 @@ function targetFor(repo, day) {
     { repo: 'pass-juken-academy2026/highschool-japanese', target: { file: 'index.html', kind: 'japanese-case' } },
     { repo: 'pass-juken-academy2026/highschool-biology', target: { file: 'index.html', kind: 'biology-row4', marker: 'qs:' } },
     { repo: 'pass-juken-academy2026/highschool-information', target: { file: 'index.html', kind: 'db-question' } },
+    { repo: 'pass-juken-academy2026/highschool-social-studies', target: { file: 'index.html', kind: 'social-row6', marker: 'const EXTRA_QUESTIONS=' } },
     { repo: 'pass-juken-academy2026/highschool-math', target: { file: 'practice.html', kind: 'math-row5', marker: 'const COMMON_TEST=' } }
   ];
   const selected = rotation[Math.abs(Number(day) || 0) % rotation.length];
@@ -284,6 +286,7 @@ async function main() {
     const prompt = String(generated.question).slice(0, 500);
     if (kind === 'biology-row6') newItem = ['ct-bio-auto-' + date.replace(/-/g, '') + '-' + (items.length + 1), prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500), String(stimulus || '')];
     else if (kind === 'biology-row4') newItem = [prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500)];
+    else if (kind === 'social-row6') newItem = [String(generated.topic || '地理').slice(0, 40), prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500), String(generated.category || '資料読解').slice(0, 60)];
     else if (kind === 'science-row5') {
       const prefix = target.file.startsWith('chemistry/') ? 'ct-chem-auto-' : target.file.startsWith('physics/') ? 'ct-phys-auto-' : target.file.startsWith('earth-science/') ? 'ct-earth-auto-' : 'ct-sci-auto-';
       newItem = [prefix + date.replace(/-/g, '') + '-' + (items.length + 1), prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500)];
