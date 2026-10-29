@@ -9,19 +9,20 @@ const eligible = [
   'pass-juken-academy2026/junior-japanese',
   'pass-juken-academy2026/junior-science',
   'pass-juken-academy2026/junior-social-studies',
-  'pass-juken-academy2026/highschool-japanese'
+  'pass-juken-academy2026/highschool-japanese',
+  'pass-juken-academy2026/highschool-biology',
+  'pass-juken-academy2026/highschool-information'
 ];
 const selected = eligible[day % eligible.length];
 assert.ok(targetFor(selected, day), 'exactly one safe target should be selected for the day');
 assert.equal(eligible.filter(repo => targetFor(repo, day)).length, 1, 'rotation should target only one repository per day');
 for (const repo of eligible) {
   const target = targetFor(repo, day);
-  if (repo === selected) assert.ok(target.kind === 'db-question' || target.kind === 'japanese-case');
+  if (repo === selected) assert.ok(target.kind === 'db-question' || target.kind === 'japanese-case' || target.kind === 'biology-row4');
   else assert.equal(target, null);
 }
 for (const repo of [
   'pass-juken-academy2026/highschool-math',
-  'pass-juken-academy2026/highschool-biology',
   'pass-juken-academy2026/highschool-social-studies',
   'pass-juken-academy2026/highschool-information',
   'pass-juken-academy2026/learning-portal'
