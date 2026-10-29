@@ -211,6 +211,19 @@ async function generate(apiKey, model, context) {
   return parseApiJson(text);
 }
 
+function reviewPayload(kind, item, relatedStimulus = null) {
+  if (kind === 'vocabulary') return { englishWord: item.en, japaneseMeaning: item.jp, distractors: item.distractors, level: item.level };
+  if (kind === 'db-question') return { topic: item.topic, question: item.q, options: item.options, answerIndex: item.a, explanation: item.ex };
+  if (kind === 'japanese-case') return { passage: relatedStimulus, question: item.q, options: item.c, answerIndex: item.a, explanation: item.e };
+  if (kind === 'english-listening') return { title: item.title, transcript: item.audioText, question: item.question, options: item.options, correctAnswer: item.answer, explanation: item.explain };
+  if (kind === 'biology-row6') return { question: item[1], options: item[2], answerIndex: item[3], explanation: item[4], stimulus: item[5] };
+  if (kind === 'biology-row4' || kind === 'practice-row4') return { question: item[0], options: item[1], answerIndex: item[2], explanation: item[3], stimulus: relatedStimulus };
+  if (kind === 'science-row5') return { question: item[1], options: item[2], answerIndex: item[3], explanation: item[4], stimulus: relatedStimulus };
+  if (kind === 'social-row6') return { topic: item[0], question: item[1], options: item[2], answerIndex: item[3], explanation: item[4], category: item[5], stimulus: relatedStimulus };
+  if (kind === 'stimulus-row5' || kind === 'math-row5') return { question: item[0], options: item[1], answerIndex: item[2], explanation: item[3], stimulus: relatedStimulus };
+  return item;
+}
+
 function assertReviewApproved(review) {
   if (!review || review.approved !== true || !Array.isArray(review.issues) || review.issues.length > 0 || typeof review.summary !== 'string' || !review.summary.trim()) {
     const issues = review && Array.isArray(review.issues) ? review.issues.map(String).slice(0, 5).join('; ') : 'review response was incomplete';
@@ -413,7 +426,7 @@ async function main() {
     out('changed', 'false'); out('summary', 'Generated question was duplicate/empty; no change applied.');
     return;
   }
-  await verifyCandidate(apiKey, model, repo, kind, newItem);
+  await verifyCandidate(apiKey, model, repo, kind, reviewPayload(kind, newItem, stimulus));
   const updated = insertArrayItem(source, span, newItem);
   fs.writeFileSync(filePath, updated, 'utf8');
   info('Added one original question to ' + target.file + ' (' + kind + ').');
@@ -428,4 +441,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, insertArrayItems, assertReviewApproved, questionText, norm, writesEnabled };
+module.exports = { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, insertArrayItems, assertReviewApproved, reviewPayload, questionText, norm, writesEnabled };
