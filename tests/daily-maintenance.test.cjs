@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const { targetFor, validateOptions, validateIndex, validateMathCommonSet, questionText, writesEnabled } = require('../scripts/daily-maintenance.cjs');
+const { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, questionText, writesEnabled } = require('../scripts/daily-maintenance.cjs');
 
 const day = 20261023;
 const slots = [
@@ -14,8 +14,9 @@ const slots = [
   ['pass-juken-academy2026/highschool-biology', 'biology-row4'],
   ['pass-juken-academy2026/highschool-information', 'db-question'],
   ['pass-juken-academy2026/highschool-math', 'practice-row4'],
-  ['pass-juken-academy2026/highschool-math', 'math-common-set'],
+  ['pass-juken-academy2026/highschool-math', 'linked-common-set'],
   ['pass-juken-academy2026/highschool-social-studies', 'practice-row4'],
+  ['pass-juken-academy2026/highschool-social-studies', 'linked-common-set'],
 ];
 const selected = slots[day % slots.length];
 assert.deepEqual([selected[0], targetFor(selected[0], day).kind], selected, 'daily rotation should select the expected target and kind');
@@ -48,10 +49,10 @@ const commonSet = {
     { question: 'Aを2個、Bを3個売った合計は？', options: ['800円','1000円','1200円','1500円'], answerIndex: 2, explanation: '600+600=1200円。' }
   ]
 };
-const checkedSet = validateMathCommonSet(commonSet, [], [], 4);
+const checkedSet = validateLinkedCommonSet(commonSet, [], [], 4);
 assert.equal(checkedSet.questions.length, 3);
 assert.equal(checkedSet.questions[2][4], 4, 'all subquestions must reference the newly appended stimulus');
-assert.throws(() => validateMathCommonSet({ ...commonSet, questions: commonSet.questions.slice(0, 2) }, [], [], 0), /3 to 5/);
-assert.throws(() => validateMathCommonSet(commonSet, ['商品Aを2個売った売上は？'], [], 0), /duplicated/);
-assert.throws(() => validateMathCommonSet(commonSet, [], [{ title: '文化祭の売上', text: 'other' }], 0), /stimulus is duplicated/);
+assert.throws(() => validateLinkedCommonSet({ ...commonSet, questions: commonSet.questions.slice(0, 2) }, [], [], 0), /3 to 5/);
+assert.throws(() => validateLinkedCommonSet(commonSet, ['商品Aを2個売った売上は？'], [], 0), /duplicated/);
+assert.throws(() => validateLinkedCommonSet(commonSet, [], [{ title: '文化祭の売上', text: 'other' }], 0), /stimulus is duplicated/);
 console.log('A-plan maintenance safety tests passed.');
