@@ -4,6 +4,7 @@ const { targetFor, validateOptions, validateIndex, questionText, writesEnabled }
 
 const day = 20261027;
 const eligible = [
+  'pass-juken-academy2026/english-study',
   'pass-juken-academy2026/math-juken-saitama',
   'pass-juken-academy2026/junior-japanese',
   'pass-juken-academy2026/junior-science',
@@ -19,7 +20,6 @@ for (const repo of eligible) {
   else assert.equal(target, null);
 }
 for (const repo of [
-  'pass-juken-academy2026/english-study',
   'pass-juken-academy2026/highschool-math',
   'pass-juken-academy2026/highschool-biology',
   'pass-juken-academy2026/highschool-social-studies',
