@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, questionText, writesEnabled } = require('../scripts/daily-maintenance.cjs');
+const { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, insertArrayItems, questionText, writesEnabled } = require('../scripts/daily-maintenance.cjs');
 
 const day = 20261023;
 const slots = [
@@ -57,4 +57,9 @@ assert.equal(checkedSet.questions[2][4], 4, 'all subquestions must reference the
 assert.throws(() => validateLinkedCommonSet({ ...commonSet, questions: commonSet.questions.slice(0, 2) }, [], [], 0), /3 to 5/);
 assert.throws(() => validateLinkedCommonSet(commonSet, ['商品Aを2個売った売上は？'], [], 0), /duplicated/);
 assert.throws(() => validateLinkedCommonSet(commonSet, [], [{ title: '文化祭の売上', text: 'other' }], 0), /stimulus is duplicated/);
+const sampleArraySource = 'const ITEMS=[{"old":1}];';
+const arrayOpen = sampleArraySource.indexOf('['), arrayClose = sampleArraySource.lastIndexOf(']');
+const insertedArraySource = insertArrayItems(sampleArraySource, { open: arrayOpen, close: arrayClose }, [{ id: 2 }, { id: 3 }]);
+const insertedArrayStart = insertedArraySource.indexOf('['), insertedArrayEnd = insertedArraySource.lastIndexOf(']');
+assert.equal(JSON.parse(insertedArraySource.slice(insertedArrayStart, insertedArrayEnd + 1)).length, 3, 'multiple linked items must be appended to the array in one operation');
 console.log('A-plan maintenance safety tests passed.');
