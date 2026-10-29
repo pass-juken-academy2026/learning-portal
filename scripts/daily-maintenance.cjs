@@ -176,7 +176,7 @@ function chooseLowestTopic(db) {
 }
 
 async function main() {
-  const repo = process.env.GITHUB_REPOSITORY || '';
+  const repo = process.env.TARGET_REPOSITORY || process.env.GITHUB_REPOSITORY || '';
   const date = new Date().toISOString().slice(0, 10);
   const day = Number(date.replace(/-/g, '')) || 0;
   const apiKey = process.env.OPENAI_API_KEY || '';

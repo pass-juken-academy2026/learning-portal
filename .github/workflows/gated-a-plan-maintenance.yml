@@ -1,0 +1,166 @@
+name: Gated A-plan question maintenance
+
+on:
+  schedule:
+    - cron: "25 20 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/gated-a-plan-maintenance.yml"
+      - "scripts/daily-maintenance.cjs"
+      - "tests/daily-maintenance.test.cjs"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gated-a-plan-question-maintenance
+  cancel-in-progress: false
+
+jobs:
+  validate-workflow:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate workflow YAML syntax
+        run: ruby -e "require 'yaml'; YAML.parse_file('.github/workflows/gated-a-plan-maintenance.yml'); puts 'Workflow YAML syntax passed.'"
+      - name: Test A-plan maintenance safety gates
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node tests/daily-maintenance.test.cjs
+
+  maintain:
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        repository:
+          - pass-juken-academy2026/math-juken-saitama
+          - pass-juken-academy2026/junior-japanese
+          - pass-juken-academy2026/junior-science
+          - pass-juken-academy2026/junior-social-studies
+          - pass-juken-academy2026/highschool-japanese
+    steps:
+      - name: Check out approved target repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repository }}
+          token: ${{ secrets.CROSS_REPO_TOKEN || github.token }}
+          path: target
+          fetch-depth: 0
+      - name: Check out automation scripts
+        uses: actions/checkout@v4
+        with:
+          repository: pass-juken-academy2026/learning-portal
+          ref: main
+          token: ${{ github.token }}
+          path: orchestrator
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test maintenance safety gates
+        run: node orchestrator/tests/daily-maintenance.test.cjs
+      - name: Run gated maintenance
+        id: maintenance
+        working-directory: target
+        env:
+          TARGET_REPOSITORY: ${{ matrix.repository }}
+          A_PLAN_WRITE_ENABLED: ${{ secrets.A_PLAN_WRITE_ENABLED }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          CROSS_REPO_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Fail closed: generation stays disabled unless every required gate is configured.
+          if [ "$A_PLAN_WRITE_ENABLED" != "true" ] || [ -z "$OPENAI_API_KEY" ] || [ -z "$CROSS_REPO_TOKEN" ]; then
+            export A_PLAN_WRITE_ENABLED=false
+            echo "A-plan is validation-only: write opt-in, OpenAI key, and cross-repo token must all be configured."
+          fi
+          node ../orchestrator/scripts/daily-maintenance.cjs
+      - name: Check changed-file scope and whitespace
+        if: steps.maintenance.outputs.changed == 'true'
+        working-directory: target
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only)"
+          test "$changed" = "index.html" || { echo "Unexpected changed files: $changed"; exit 1; }
+          test -s index.html
+      - name: Run existing target repository tests
+        if: steps.maintenance.outputs.changed == 'true'
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test in tests/audit-bank-quality.cjs tests/validate-bank-data.cjs tests/validate-question-bank.cjs tests/validate-data.cjs; do
+            if [ -f "$test" ]; then
+              echo "Running $test"
+              node "$test"
+            fi
+          done
+      - name: Validate inline JavaScript syntax and duplicate IDs
+        if: steps.maintenance.outputs.changed == 'true'
+        working-directory: target
+        run: |
+          python - <<'PY'
+          from collections import Counter
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import subprocess, tempfile, sys
+          class Audit(HTMLParser):
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.ids=[]; self.scripts=[]; self.in_script=False; self.buf=[]; self.types=[]
+              def handle_starttag(self, tag, attrs):
+                  attrs=dict(attrs)
+                  if attrs.get('id'): self.ids.append(attrs['id'])
+                  if tag=='script':
+                      self.in_script=True; self.buf=[]; self.types.append(attrs.get('type','').lower())
+              def handle_data(self, data):
+                  if self.in_script: self.buf.append(data)
+              def handle_endtag(self, tag):
+                  if tag=='script' and self.in_script:
+                      self.scripts.append((''.join(self.buf), self.types[-1] if self.types else ''))
+                      self.in_script=False
+          path=Path('index.html')
+          parser=Audit(); parser.feed(path.read_text(encoding='utf-8'))
+          duplicates=[key for key,count in Counter(parser.ids).items() if count>1]
+          if duplicates: print('Duplicate IDs:', duplicates); sys.exit(1)
+          failed=False
+          for number,(script,kind) in enumerate(parser.scripts,1):
+              if not script.strip() or kind not in ('','text/javascript','application/javascript','module'): continue
+              with tempfile.NamedTemporaryFile('w',suffix='.js',encoding='utf-8') as handle:
+                  handle.write(script); handle.flush()
+                  result=subprocess.run(['node','--check',handle.name],capture_output=True,text=True)
+              if result.returncode:
+                  print(f'Inline JavaScript syntax error in script {number}:',result.stderr); failed=True
+          if failed: sys.exit(1)
+          print(f'HTML validation passed: {len(parser.ids)} IDs, {len(parser.scripts)} script tags.')
+          PY
+      - name: Create branch and pull request only after all gates pass
+        if: steps.maintenance.outputs.changed == 'true'
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN" || { echo "Missing CROSS_REPO_TOKEN; refusing to push." ; exit 1; }
+          branch="automation/a-plan-$GH_RUN_ID"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add index.html
+          git commit -m "Add one validated original practice question"
+          git push origin "$branch"
+          gh pr create --repo "$TARGET_REPOSITORY" --base main --head "$branch" \
+            --title "A-plan: add one validated practice question" \
+            --body "Automated proposal from the gated A-plan workflow. This PR changes only index.html and was created after the available safety and validation checks passed. Please review educational correctness and exam-format fit before merging."
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+          TARGET_REPOSITORY: ${{ matrix.repository }}
+          GH_RUN_ID: ${{ github.run_id }}
