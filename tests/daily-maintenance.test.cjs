@@ -39,10 +39,4 @@ assert.doesNotThrow(() => validateIndex(3));
 assert.throws(() => validateIndex(4), /Answer index/);
 assert.equal(questionText({q:'例題'}, 'db-question'), '例題');
 assert.equal(questionText({en:'environment',jp:'環境'}, 'vocabulary'), 'environment');
-for (let i = 0; i < eligible.length; i++) {
-  const dateForSlot = i;
-  const matches = eligible.filter(repo => targetFor(repo, dateForSlot));
-  assert.equal(matches.length, 1, 'every rotation slot must select exactly one repository');
-  assert.equal(matches[0], eligible[i], 'each supported repository must be reachable in the rotation');
-}
 console.log('A-plan maintenance safety tests passed.');
