@@ -120,7 +120,9 @@ function targetFor(repo, day) {
     { repo: 'pass-juken-academy2026/junior-social-studies', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/highschool-japanese', target: { file: 'index.html', kind: 'japanese-case' } },
     { repo: 'pass-juken-academy2026/highschool-biology', target: { file: 'index.html', kind: 'biology-row4', marker: 'qs:' } },
-    { repo: 'pass-juken-academy2026/highschool-information', target: { file: 'index.html', kind: 'db-question' } }
+    { repo: 'pass-juken-academy2026/highschool-information', target: { file: 'index.html', kind: 'db-question' } },
+    { repo: 'pass-juken-academy2026/highschool-math', target: { file: 'practice.html', kind: 'practice-row4', marker: 'const BANK=' } },
+    { repo: 'pass-juken-academy2026/highschool-social-studies', target: { file: 'practice.html', kind: 'practice-row4', marker: 'const BANK=' } }
   ];
   const selected = rotation[Math.abs(Number(day) || 0) % rotation.length];
   return selected && repo === selected.repo ? selected.target : null;
@@ -261,6 +263,8 @@ async function main() {
     context = 'Repository: ' + repo + '. Add exactly one original multiple-choice question to the existing DB.questions array. Output JSON object with keys topic, q, options, a, ex. topic must be exactly "' + topic + '". options must have exactly four Japanese strings; a is a zero-based integer from 0 to 3; ex is a concise Japanese explanation. Use existing topics only. Existing topics and counts: ' + JSON.stringify(db.topics.map(t => ({ name: t.name, count: (db.questions || []).filter(q => q.topic === t.name).length }))) + '. Recent questions: ' + JSON.stringify(sampleItems.map(x => ({ topic: x.topic, q: x.q, options: x.options, a: x.a }))).slice(0, 4500);
   } else if (kind === 'japanese-case') {
     context = 'Repository: ' + repo + '. Add one original question to an existing high-school Japanese common-test passage. Output JSON object with keys q, c, a, e. c must be exactly four Japanese options; a is a zero-based index 0-3; e is a concise Japanese explanation. The existing passage is: ' + JSON.stringify(stimulus) + '. Recent questions in this passage: ' + JSON.stringify(sampleItems.map(x => x.q)).slice(0, 2500);
+  } else if (kind === 'practice-row4') {
+    context = 'Repository: ' + repo + '. Add one original multiple-choice practice question to the existing four-field BANK array. Output JSON object with keys question, options, answerIndex, explanation. The question must be self-contained, accurate, and suitable for the repository subject. options must be exactly four distinct Japanese strings with one correct answer; answerIndex is an integer from 0 to 3; explanation is concise Japanese. Do not copy official exam content. Recent questions: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[0] : '')).slice(0, 4000);
   } else if (kind === 'biology-row6') {
     context = 'Repository: ' + repo + '. Add one original biology common-test question based on this existing stimulus: ' + String(stimulus || '').slice(0, 2200) + '. Output JSON object with keys question, options, answerIndex, explanation. options must be four Japanese strings; answerIndex is 0-3; explanation is concise Japanese. Recent questions: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[1] : '')).slice(0, 3000);
   } else if (kind === 'biology-row4') {
@@ -302,7 +306,7 @@ async function main() {
     if (!generated.question || !generated.explanation) throw new Error('Invalid generated question.');
     const prompt = String(generated.question).slice(0, 500);
     if (kind === 'biology-row6') newItem = ['ct-bio-auto-' + date.replace(/-/g, '') + '-' + (items.length + 1), prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500), String(stimulus || '')];
-    else if (kind === 'biology-row4') newItem = [prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500)];
+    else if (kind === 'biology-row4' || kind === 'practice-row4') newItem = [prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500)];
     else if (kind === 'social-row6') newItem = [String(generated.topic || '地理').slice(0, 40), prompt, generated.options.map(String), generated.answerIndex, String(generated.explanation).slice(0, 500), String(generated.category || '資料読解').slice(0, 60)];
     else if (kind === 'science-row5') {
       const prefix = target.file.startsWith('chemistry/') ? 'ct-chem-auto-' : target.file.startsWith('physics/') ? 'ct-phys-auto-' : target.file.startsWith('earth-science/') ? 'ct-earth-auto-' : 'ct-sci-auto-';
