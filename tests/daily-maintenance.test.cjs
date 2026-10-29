@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const { targetFor, validateOptions, validateIndex, questionText, writesEnabled } = require('../scripts/daily-maintenance.cjs');
 
-const day = 20261027;
+const day = 20261023;
 const eligible = [
   'pass-juken-academy2026/english-study',
   'pass-juken-academy2026/math-juken-saitama',
