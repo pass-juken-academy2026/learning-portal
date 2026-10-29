@@ -119,8 +119,7 @@ function targetFor(repo, day) {
     { repo: 'pass-juken-academy2026/highschool-japanese', target: { file: 'index.html', kind: 'japanese-case' } },
     { repo: 'pass-juken-academy2026/highschool-biology', target: { file: 'index.html', kind: 'biology-row4', marker: 'qs:' } },
     { repo: 'pass-juken-academy2026/highschool-information', target: { file: 'index.html', kind: 'db-question' } },
-    { repo: 'pass-juken-academy2026/highschool-social-studies', target: { file: 'index.html', kind: 'social-row6', marker: 'const EXTRA_QUESTIONS=' } },
-    { repo: 'pass-juken-academy2026/highschool-math', target: { file: 'practice.html', kind: 'math-row5', marker: 'const COMMON_TEST=' } }
+    { repo: 'pass-juken-academy2026/highschool-social-studies', target: { file: 'index.html', kind: 'social-row6', marker: 'const EXTRA_QUESTIONS=' } }
   ];
   const selected = rotation[Math.abs(Number(day) || 0) % rotation.length];
   return selected && repo === selected.repo ? selected.target : null;
