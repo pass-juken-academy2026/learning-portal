@@ -1,0 +1,49 @@
+name: Scheduled 11-repository audit
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/automation-audit.py"
+      - "scripts/test-automation-audit.py"
+      - ".github/workflows/repository-audit.yml"
+  schedule:
+    - cron: "23 18 * * 0"
+  push:
+    paths:
+      - "scripts/automation-audit.py"
+      - "scripts/test-automation-audit.py"
+      - ".github/workflows/repository-audit.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scheduled-repository-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out orchestrator
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check Python syntax
+        run: python -m py_compile scripts/automation-audit.py
+      - name: Run offline self-test
+        run: python scripts/automation-audit.py --self-test
+      - name: Audit the approved 11 repositories (read-only)
+        run: python scripts/automation-audit.py
+      - name: Upload audit report even if audit fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-audit-report
+          path: automation-reports/
+          if-no-files-found: warn
+          retention-days: 90
