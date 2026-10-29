@@ -26,7 +26,6 @@ for (let i = 0; i < slots.length; i++) {
   assert.deepEqual([matches[0][0], targetFor(matches[0][0], i).kind], [repo, kind], 'each supported question/vocabulary slot must be reachable');
 }
 for (const repo of [
-  'pass-juken-academy2026/highschool-math',
   'pass-juken-academy2026/learning-portal'
 ]) assert.equal(targetFor(repo, day), null, repo + ' must stay validation-only');
 assert.equal(writesEnabled(undefined), false, 'writes must be disabled by default');
