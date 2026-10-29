@@ -2,6 +2,10 @@ name: Scheduled 11-repository audit
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/automation-audit.py"
+      - ".github/workflows/repository-audit.yml"
   schedule:
     - cron: "23 18 * * 0"
   push:
@@ -27,6 +31,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Check Python syntax
+        run: python -m py_compile scripts/automation-audit.py
       - name: Audit the approved 11 repositories (read-only)
         run: python scripts/automation-audit.py
       - name: Upload audit report
