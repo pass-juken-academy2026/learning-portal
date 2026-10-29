@@ -106,6 +106,39 @@ function validateIndex(index) {
   if (!Number.isInteger(index) || index < 0 || index > 3) throw new Error('Answer index must be 0, 1, 2, or 3.');
 }
 
+function validateMathCommonSet(generated, existingPrompts = [], existingStimuli = [], stimulusIndex = 0) {
+  if (!generated || !generated.stimulus || typeof generated.stimulus !== 'object') throw new Error('Common-test set must include a stimulus object.');
+  const title = String(generated.stimulus.title || '').trim();
+  const text = String(generated.stimulus.text || '').trim();
+  if (!title || title.length > 120 || !text || text.length > 2600) throw new Error('Invalid common-test stimulus title or text.');
+  const normalizedTitle = norm(title);
+  const normalizedText = norm(text);
+  if (existingStimuli.some(item => norm(item && item.title) === normalizedTitle || norm(item && item.text) === normalizedText)) throw new Error('Common-test stimulus is duplicated.');
+  if (!Array.isArray(generated.questions) || generated.questions.length < 3 || generated.questions.length > 5) throw new Error('Common-test set must contain 3 to 5 linked subquestions.');
+  const seen = new Set(existingPrompts.map(norm).filter(Boolean));
+  const questions = generated.questions.map((item, index) => {
+    if (!item || typeof item !== 'object') throw new Error('Invalid common-test subquestion at index ' + index + '.');
+    const question = String(item.question || '').trim();
+    const explanation = String(item.explanation || '').trim();
+    if (!question || question.length > 500 || !explanation || explanation.length > 600) throw new Error('Common-test subquestion requires a prompt and explanation.');
+    const key = norm(question);
+    if (seen.has(key)) throw new Error('Common-test subquestion is duplicated: ' + question.slice(0, 100));
+    seen.add(key);
+    validateOptions(item.options);
+    validateIndex(item.answerIndex);
+    return [question, item.options.map(x => String(x).trim()), item.answerIndex, explanation, stimulusIndex];
+  });
+  return { stimulus: { title, text }, questions };
+}
+
+function insertArrayItems(source, span, items) {
+  if (!items.length) return source;
+  const before = source.slice(span.open + 1, span.close).trimEnd();
+  const separator = before.length === 0 || before.endsWith(',') ? '' : ',';
+  const insertion = separator + items.map(item => JSON.stringify(item)).join(',');
+  return source.slice(0, span.close) + insertion + source.slice(span.close);
+}
+
 function writesEnabled(value) { return value === 'true'; }
 
 function targetFor(repo, day) {
@@ -122,6 +155,7 @@ function targetFor(repo, day) {
     { repo: 'pass-juken-academy2026/highschool-biology', target: { file: 'index.html', kind: 'biology-row4', marker: 'qs:' } },
     { repo: 'pass-juken-academy2026/highschool-information', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/highschool-math', target: { file: 'practice.html', kind: 'practice-row4', marker: 'const BANK=' } },
+    { repo: 'pass-juken-academy2026/highschool-math', target: { file: 'practice.html', kind: 'math-common-set', marker: 'const COMMON_TEST=', stimuliMarker: 'const COMMON_STIMULI=' } },
     { repo: 'pass-juken-academy2026/highschool-social-studies', target: { file: 'practice.html', kind: 'practice-row4', marker: 'const BANK=' } }
   ];
   const selected = rotation[Math.abs(Number(day) || 0) % rotation.length];
@@ -212,7 +246,7 @@ async function main() {
     return;
   }
 
-  let span, items, sampleItems, stimulus = null, stimulusIndex = 0, db = null, topic = null;
+  let span, items, sampleItems, stimulus = null, stimulusIndex = 0, stimuli = [], db = null, topic = null;
   const kind = target.kind;
   if (kind === 'db-question') {
     const parsed = extractDb(source);
@@ -240,7 +274,12 @@ async function main() {
     span = arraySpan(source, target.marker);
     items = parseItems(source, span);
     sampleItems = items.slice(-8);
-    if (kind === 'stimulus-row5') {
+    if (kind === 'math-common-set') {
+      const stimSpan = arraySpan(source, target.stimuliMarker);
+      stimuli = JSON.parse(source.slice(stimSpan.open, stimSpan.close + 1));
+      stimulusIndex = stimuli.length;
+      stimulus = stimuli.slice(-5).map(x => ({ title: x.title, text: String(x.text || '').slice(0, 700) }));
+    } else if (kind === 'stimulus-row5') {
       const stimSpan = arraySpan(source, target.stimuliMarker);
       const stimRaw = source.slice(stimSpan.open, stimSpan.close + 1);
       const stimuli = JSON.parse(stimRaw);
@@ -263,6 +302,8 @@ async function main() {
     context = 'Repository: ' + repo + '. Add exactly one original multiple-choice question to the existing DB.questions array. Output JSON object with keys topic, q, options, a, ex. topic must be exactly "' + topic + '". options must have exactly four Japanese strings; a is a zero-based integer from 0 to 3; ex is a concise Japanese explanation. Use existing topics only. Existing topics and counts: ' + JSON.stringify(db.topics.map(t => ({ name: t.name, count: (db.questions || []).filter(q => q.topic === t.name).length }))) + '. Recent questions: ' + JSON.stringify(sampleItems.map(x => ({ topic: x.topic, q: x.q, options: x.options, a: x.a }))).slice(0, 4500);
   } else if (kind === 'japanese-case') {
     context = 'Repository: ' + repo + '. Add one original question to an existing high-school Japanese common-test passage. Output JSON object with keys q, c, a, e. c must be exactly four Japanese options; a is a zero-based index 0-3; e is a concise Japanese explanation. The existing passage is: ' + JSON.stringify(stimulus) + '. Recent questions in this passage: ' + JSON.stringify(sampleItems.map(x => x.q)).slice(0, 2500);
+  } else if (kind === 'math-common-set') {
+    context = 'Repository: ' + repo + '. Create one original Common Test-style mathematics 大問 as a linked set. Return JSON with keys stimulus and questions. stimulus must be an object with title and text; text must give all conditions/data needed, be mathematically consistent, and create one coherent real-world or mathematical scenario. questions must contain 3 to 5 objects, each with question, options (exactly four distinct Japanese strings), answerIndex (0-3), and explanation (concise Japanese). The subquestions must all refer to the same stimulus and progress coherently rather than being unrelated small questions. State units and assumptions, avoid ambiguous wording, and do not copy official exam questions. Existing recent stimuli: ' + JSON.stringify(stimulus).slice(0, 4200) + '. Existing recent question prompts: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[0] : '')).slice(0, 3000);
   } else if (kind === 'practice-row4') {
     context = 'Repository: ' + repo + '. Add one original multiple-choice practice question to the existing four-field BANK array. Output JSON object with keys question, options, answerIndex, explanation. The question must be self-contained, accurate, and suitable for the repository subject. options must be exactly four distinct Japanese strings with one correct answer; answerIndex is an integer from 0 to 3; explanation is concise Japanese. Do not copy official exam content. Recent questions: ' + JSON.stringify(sampleItems.map(x => Array.isArray(x) ? x[0] : '')).slice(0, 4000);
   } else if (kind === 'biology-row6') {
@@ -278,6 +319,16 @@ async function main() {
   }
 
   const generated = await generate(apiKey, model, context);
+  if (kind === 'math-common-set') {
+    const candidate = validateMathCommonSet(generated, items.map(item => questionText(item, kind)), stimuli, stimulusIndex);
+    const updatedQuestions = insertArrayItems(source, span, candidate.questions);
+    const stimulusSpan = arraySpan(updatedQuestions, target.stimuliMarker);
+    const updated = insertArrayItems(updatedQuestions, stimulusSpan, [candidate.stimulus]);
+    fs.writeFileSync(filePath, updated, 'utf8');
+    info('Added one linked mathematics common-test set (' + candidate.questions.length + ' subquestions) to ' + target.file + '.');
+    out('changed', 'true'); out('file', target.file); out('summary', 'Added one linked mathematics common-test set with ' + candidate.questions.length + ' subquestions.');
+    return;
+  }
   let newItem;
   if (kind === 'vocabulary') {
     const en = String(generated.en || '').trim();
@@ -335,4 +386,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { targetFor, validateOptions, validateIndex, questionText, norm, writesEnabled };
+module.exports = { targetFor, validateOptions, validateIndex, validateMathCommonSet, questionText, norm, writesEnabled };
