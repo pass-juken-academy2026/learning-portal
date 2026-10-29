@@ -83,7 +83,7 @@ def self_test():
     assert parser.buttons == 1 and parser.selects == 1
     assert len(REPOS) == 11 and len(set(REPOS)) == 11
     assert len(re.findall(TERMS["common_test_mentions"], "共通テスト 模試")) == 1
-    assert list(csv.reader(["a\\tb"], delimiter="\\t")) == [["a", "b"]]
+    assert list(csv.reader(["a\tb"], delimiter="\t")) == [["a", "b"]]
     print("Self-test passed: HTML markers, asset references, TSV delimiter, and fixed 11-repository scope.")
 
 def local_target(repo_root: Path, source: Path, raw_url: str):
