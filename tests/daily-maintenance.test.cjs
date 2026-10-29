@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, insertArrayItems, assertReviewApproved, questionText, writesEnabled } = require('../scripts/daily-maintenance.cjs');
+const { targetFor, validateOptions, validateIndex, validateLinkedCommonSet, insertArrayItems, assertReviewApproved, reviewPayload, questionText, writesEnabled } = require('../scripts/daily-maintenance.cjs');
 
 const day = 20261023;
 const slots = [
@@ -38,6 +38,9 @@ assert.doesNotThrow(() => assertReviewApproved({ approved: true, issues: [], sum
 assert.throws(() => assertReviewApproved({ approved: false, issues: ['Answer index is incorrect.'], summary: 'Rejected.' }), /did not approve/);
 assert.throws(() => assertReviewApproved({ approved: true, issues: ['Ambiguous wording.'], summary: 'Rejected.' }), /did not approve/);
 assert.throws(() => assertReviewApproved({ approved: true, summary: 'Missing issues list.' }), /did not approve/);
+assert.deepEqual(reviewPayload('japanese-case', { q: '問', c: ['A','B','C','D'], a: 1, e: '理由' }, '本文'), { passage: '本文', question: '問', options: ['A','B','C','D'], answerIndex: 1, explanation: '理由' });
+assert.deepEqual(reviewPayload('practice-row4', ['問', ['A','B','C','D'], 2, '解説'], null), { question: '問', options: ['A','B','C','D'], answerIndex: 2, explanation: '解説', stimulus: null });
+assert.deepEqual(reviewPayload('vocabulary', { en: 'decide', jp: '決定する', distractors: ['describe','deliver','discover'], level: 45 }), { englishWord: 'decide', japaneseMeaning: '決定する', distractors: ['describe','deliver','discover'], level: 45 });
 assert.doesNotThrow(() => validateOptions(['A','B','C','D']));
 assert.throws(() => validateOptions(['A','A','C','D']), /unique/);
 assert.doesNotThrow(() => validateIndex(0));
