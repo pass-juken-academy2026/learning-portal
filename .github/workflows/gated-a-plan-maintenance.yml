@@ -96,8 +96,10 @@ jobs:
           set -euo pipefail
           git diff --check
           changed="$(git diff --name-only)"
-          test "$changed" = "index.html" || { echo "Unexpected changed files: $changed"; exit 1; }
-          test -s index.html
+          expected_file="index.html"
+          if [ "$TARGET_REPOSITORY" = "pass-juken-academy2026/highschool-math" ]; then expected_file="practice.html"; fi
+          test "$changed" = "$expected_file" || { echo "Unexpected changed files: $changed (expected $expected_file)"; exit 1; }
+          test -s "$expected_file"
       - name: Run existing target repository tests
         if: steps.maintenance.outputs.changed == 'true'
         working-directory: target
@@ -134,7 +136,10 @@ jobs:
                   if tag=='script' and self.in_script:
                       self.scripts.append((''.join(self.buf), self.types[-1] if self.types else ''))
                       self.in_script=False
-          path=Path('index.html')
+          import os
+          target=os.environ.get('TARGET_REPOSITORY','')
+          filename='practice.html' if target=='pass-juken-academy2026/highschool-math' else 'index.html'
+          path=Path(filename)
           parser=Audit(); parser.feed(path.read_text(encoding='utf-8'))
           duplicates=[key for key,count in Counter(parser.ids).items() if count>1]
           if duplicates: print('Duplicate IDs:', duplicates); sys.exit(1)
@@ -160,7 +165,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
-          git add index.html
+          expected_file="index.html"
+          if [ "$TARGET_REPOSITORY" = "pass-juken-academy2026/highschool-math" ]; then expected_file="practice.html"; fi
+          git add "$expected_file"
           git commit -m "Add one validated original practice question"
           git push origin "$branch"
           gh pr create --repo "$TARGET_REPOSITORY" --base main --head "$branch" \
