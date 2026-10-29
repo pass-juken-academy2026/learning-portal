@@ -156,7 +156,7 @@ def audit(repo: str, root: Path) -> dict:
                 item["top_level_type"] = type(parsed).__name__
                 item["top_level_items"] = len(parsed) if isinstance(parsed, (list, dict)) else None
             elif data_path.suffix.lower() in {".csv", ".tsv"}:
-                delimiter = "\\t" if data_path.suffix.lower() == ".tsv" else ","
+                delimiter = "\t" if data_path.suffix.lower() == ".tsv" else ","
                 item["row_count_including_header"] = sum(1 for _ in csv.reader(decoded.splitlines(), delimiter=delimiter))
                 item["csv_parse_ok"] = True
         except Exception as exc:
