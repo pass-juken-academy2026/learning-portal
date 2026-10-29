@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const { targetFor, validateOptions, validateIndex, questionText } = require('../scripts/daily-maintenance.cjs');
+const { targetFor, validateOptions, validateIndex, questionText, writesEnabled } = require('../scripts/daily-maintenance.cjs');
 
 const day = 20261027;
 const eligible = [
@@ -26,6 +26,10 @@ for (const repo of [
   'pass-juken-academy2026/highschool-information',
   'pass-juken-academy2026/learning-portal'
 ]) assert.equal(targetFor(repo, day), null, repo + ' must stay validation-only');
+assert.equal(writesEnabled(undefined), false, 'writes must be disabled by default');
+assert.equal(writesEnabled('false'), false, 'false must not enable writes');
+assert.equal(writesEnabled('TRUE'), false, 'only the exact string true enables writes');
+assert.equal(writesEnabled('true'), true, 'explicit opt-in enables the gate');
 assert.doesNotThrow(() => validateOptions(['A','B','C','D']));
 assert.throws(() => validateOptions(['A','A','C','D']), /unique/);
 assert.doesNotThrow(() => validateIndex(0));
