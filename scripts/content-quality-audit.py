@@ -55,6 +55,11 @@ def looks_like_prompt(value: str) -> bool:
         r"\b(?:function|const|let|var)\s+[A-Za-z_$]",
         r"=>|\.textContent|\.append(?:Child)?\(|URLSearchParams",
         r":where\(|--[A-Za-z0-9_-]+\s*:|\{\s*(?:touch-action|display|color|margin|padding)\s*:",
+        r"\b(?:questions|answers)\s*['\"]?\s*\??\s*[:+?]",
+        r"(?:^|\s|['\"])\.?/?[A-Za-z0-9_./-]+\.html?(?:\?|$)",
+        r"\b(?:classList|querySelector|getElementById|innerHTML|textContent|addEventListener|URLSearchParams)\b",
+        r"\.(?:includes|map|filter|forEach)\s*\(",
+        r"^[?&=+*/{};]|[?&](?:subject|mode|units|type)=",
     )
     return not any(re.search(pattern, value, re.I) for pattern in code_patterns)
 

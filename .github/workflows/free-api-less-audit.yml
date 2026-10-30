@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/free-api-less-audit.yml"
       - "scripts/content-quality-audit.py"
+      - "scripts/contrast-visibility-audit.py"
   schedule:
     - cron: "35 20 * * 1"
   pull_request:
@@ -15,6 +16,7 @@ on:
       - "scripts/free-audit.cjs"
       - "tests/free-audit.test.cjs"
       - "scripts/content-quality-audit.py"
+      - "scripts/contrast-visibility-audit.py"
 
 permissions:
   contents: read
@@ -38,6 +40,7 @@ jobs:
           python-version: "3.12"
       - run: python scripts/automation-audit.py --self-test
       - run: python scripts/content-quality-audit.py --self-test
+      - run: python scripts/contrast-visibility-audit.py --self-test
 
   audit:
     runs-on: ubuntu-latest
@@ -144,6 +147,10 @@ jobs:
       - name: Run content duplicate and missing-field triage
         if: always()
         run: python auditor/scripts/content-quality-audit.py --root target --output content-quality-audit.json > content-quality-audit.stdout.json
+      # Heuristic contrast triage is read-only; findings are candidates, not conformance verdicts.
+      - name: Run low-contrast text triage
+        if: always()
+        run: python auditor/scripts/contrast-visibility-audit.py --root target --output contrast-visibility-audit.json > contrast-visibility-audit.stdout.json
       - name: Upload audit report
         if: always()
         uses: actions/upload-artifact@v4
@@ -154,6 +161,8 @@ jobs:
             audit-report.md
             content-quality-audit.json
             content-quality-audit.stdout.json
+            contrast-visibility-audit.json
+            contrast-visibility-audit.stdout.json
           if-no-files-found: warn
           retention-days: 30
 
