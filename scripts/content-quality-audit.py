@@ -125,7 +125,7 @@ def audit(root: Path) -> dict:
     for path in scan_files:
         source = path.read_text(encoding="utf-8", errors="replace")
         rel = str(path.relative_to(root))
-        if path.suffix.lower() == ".html":\n            candidates.extend(collect_candidates(source, rel))\n        else:\n            # JS/JSON banks often hold the real question records outside HTML markup.\n            candidates.extend(collect_candidates(source, rel))
+        candidates.extend(collect_candidates(source, rel))
         for field, pattern in SENSITIVE_OR_RIGHTS_HINTS.items():
             hits = len(pattern.findall(source))
             if hits:
