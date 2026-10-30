@@ -49,13 +49,13 @@ function auditHtml(html, filename = 'index.html') {
 function parseDbQuestions(html) {
   const marker = 'const DB=';
   const start = html.indexOf(marker);
-  if (start < 0) return { found: false, questionCount: null, duplicateQuestions: [], malformed: [] };
+  if (start < 0) return { found: false, questionCount: null, duplicateQuestions: [], malformed: [], promptKeys: [] };
   const jsonStart = start + marker.length;
   const end = html.indexOf(',key=', jsonStart);
-  if (end < 0) return { found: true, questionCount: null, duplicateQuestions: [], malformed: ['Could not locate DB terminator (,key=).'] };
+  if (end < 0) return { found: true, questionCount: null, duplicateQuestions: [], malformed: ['Could not locate DB terminator (,key=).'], promptKeys: [] };
   let db;
   try { db = JSON.parse(html.slice(jsonStart, end)); }
-  catch (error) { return { found: true, questionCount: null, duplicateQuestions: [], malformed: ['DB JSON parse failed: ' + error.message] }; }
+  catch (error) { return { found: true, questionCount: null, duplicateQuestions: [], malformed: ['DB JSON parse failed: ' + error.message], promptKeys: [] }; }
   const questions = Array.isArray(db.questions) ? db.questions : [];
   const seen = new Set();
   const duplicateQuestions = [];
@@ -72,7 +72,7 @@ function parseDbQuestions(html) {
       if (typeof q.ex !== 'string' || !q.ex.trim()) malformed.push('Question ' + i + ' has no explanation.');
     }
   });
-  return { found: true, topicCount: Array.isArray(db.topics) ? db.topics.length : 0, questionCount: questions.length, duplicateQuestions, malformed };
+  return { found: true, topicCount: Array.isArray(db.topics) ? db.topics.length : 0, questionCount: questions.length, duplicateQuestions, malformed, promptKeys: questions.map(q => normalize(q && (q.q || q.question))).filter(Boolean) };
 }
 
 function checkScriptSyntax(scripts) {
@@ -135,8 +135,7 @@ function runAudit(targetDir, repo) {
   }
   const uniquePromptCounts = new Map();
   for (const bank of banks) {
-    for (const q of bank.questions || []) {
-      const key = normalize(q && (q.q || q.question));
+    for (const key of bank.promptKeys || []) {
       if (key) uniquePromptCounts.set(key, (uniquePromptCounts.get(key) || 0) + 1);
     }
   }
