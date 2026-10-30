@@ -49,13 +49,13 @@ function auditHtml(html, filename = 'index.html') {
 function parseDbQuestions(html) {
   const marker = 'const DB=';
   const start = html.indexOf(marker);
-  if (start < 0) return { found: false, questionCount: null, duplicateQuestions: [], malformed: [] };
+  if (start < 0) return { found: false, questionCount: null, duplicateQuestions: [], malformed: [], promptKeys: [] };
   const jsonStart = start + marker.length;
   const end = html.indexOf(',key=', jsonStart);
-  if (end < 0) return { found: true, questionCount: null, duplicateQuestions: [], malformed: ['Could not locate DB terminator (,key=).'] };
+  if (end < 0) return { found: true, questionCount: null, duplicateQuestions: [], malformed: ['Could not locate DB terminator (,key=).'], promptKeys: [] };
   let db;
   try { db = JSON.parse(html.slice(jsonStart, end)); }
-  catch (error) { return { found: true, questionCount: null, duplicateQuestions: [], malformed: ['DB JSON parse failed: ' + error.message] }; }
+  catch (error) { return { found: true, questionCount: null, duplicateQuestions: [], malformed: ['DB JSON parse failed: ' + error.message], promptKeys: [] }; }
   const questions = Array.isArray(db.questions) ? db.questions : [];
   const seen = new Set();
   const duplicateQuestions = [];
@@ -72,7 +72,7 @@ function parseDbQuestions(html) {
       if (typeof q.ex !== 'string' || !q.ex.trim()) malformed.push('Question ' + i + ' has no explanation.');
     }
   });
-  return { found: true, topicCount: Array.isArray(db.topics) ? db.topics.length : 0, questionCount: questions.length, duplicateQuestions, malformed };
+  return { found: true, topicCount: Array.isArray(db.topics) ? db.topics.length : 0, questionCount: questions.length, duplicateQuestions, malformed, promptKeys: questions.map(q => normalize(q && (q.q || q.question))).filter(Boolean) };
 }
 
 function checkScriptSyntax(scripts) {
@@ -90,41 +90,69 @@ function checkScriptSyntax(scripts) {
   return failures;
 }
 
+function walkHtmlFiles(root, relative = '') {
+  const base = path.join(root, relative);
+  const found = [];
+  for (const entry of fs.readdirSync(base, { withFileTypes: true })) {
+    if (entry.name === '.git' || entry.name === 'node_modules' || entry.name === 'vendor') continue;
+    const rel = path.join(relative, entry.name);
+    if (entry.isDirectory()) found.push(...walkHtmlFiles(root, rel));
+    else if (entry.isFile() && /\.(?:html?|HTML?)$/.test(entry.name)) found.push(rel);
+  }
+  return found;
+}
+
 function runAudit(targetDir, repo) {
-  const htmlFiles = fs.readdirSync(targetDir).filter(name => name.toLowerCase().endsWith('.html')).sort();
+  const htmlFiles = walkHtmlFiles(targetDir).sort();
   const files = [];
   const errors = [];
   const warnings = [];
-  if (!htmlFiles.length) errors.push('No top-level HTML files found.');
-  for (const name of htmlFiles) {
-    const full = path.join(targetDir, name);
+  const banks = [];
+  if (!htmlFiles.length) errors.push('No HTML files found.');
+  for (const relativeName of htmlFiles) {
+    const full = path.join(targetDir, relativeName);
     const html = fs.readFileSync(full, 'utf8');
-    const result = auditHtml(html, name);
+    const result = auditHtml(html, relativeName.split(path.sep).join('/'));
     const syntaxFailures = checkScriptSyntax(result.inlineScripts);
-    const missingLinks = result.localLinks.filter(link => link && !fs.existsSync(path.resolve(targetDir, link)) && !link.startsWith('/'));
-    if (result.duplicateIds.length) errors.push(name + ': duplicate IDs: ' + result.duplicateIds.join(', '));
-    if (syntaxFailures.length) errors.push(name + ': inline JavaScript syntax errors: ' + syntaxFailures.map(x => 'script ' + x.script).join(', '));
-    if (missingLinks.length) warnings.push(name + ': possibly missing local assets: ' + [...new Set(missingLinks)].slice(0, 20).join(', '));
+    const missingLinks = result.localLinks.filter(link =>
+      link && !fs.existsSync(path.resolve(path.dirname(full), link)) &&
+      !path.isAbsolute(link) && !link.startsWith('/')
+    );
+    if (result.duplicateIds.length) errors.push(relativeName + ': duplicate IDs: ' + result.duplicateIds.join(', '));
+    if (syntaxFailures.length) errors.push(relativeName + ': inline JavaScript syntax errors: ' + syntaxFailures.map(x => 'script ' + x.script).join(', '));
+    if (missingLinks.length) warnings.push(relativeName + ': possibly missing local assets: ' + [...new Set(missingLinks)].slice(0, 20).join(', '));
     files.push({
-      filename: name, bytes: result.bytes, idCount: result.idCount,
+      filename: relativeName.split(path.sep).join('/'), bytes: result.bytes, idCount: result.idCount,
       duplicateIds: result.duplicateIds, inlineScriptCount: result.inlineScripts.length,
       inlineScriptFailures: syntaxFailures, missingLocalLinks: [...new Set(missingLinks)]
     });
+    const bank = parseDbQuestions(html);
+    if (bank.found) {
+      banks.push({ filename: relativeName.split(path.sep).join('/'), ...bank });
+      if (bank.malformed.length) errors.push(relativeName + ': question bank structural issues: ' + bank.malformed.slice(0, 10).join(' | '));
+      if (bank.duplicateQuestions.length) warnings.push(relativeName + ': duplicate DB question prompts: ' + bank.duplicateQuestions.length);
+    }
+  }
+  const uniquePromptCounts = new Map();
+  for (const bank of banks) {
+    for (const key of bank.promptKeys || []) {
+      if (key) uniquePromptCounts.set(key, (uniquePromptCounts.get(key) || 0) + 1);
+    }
   }
   const primaryName = fs.existsSync(path.join(targetDir, 'practice.html')) &&
     /highschool-(?:math|social-studies)$/.test(repo) ? 'practice.html' : 'index.html';
-  const primaryPath = path.join(targetDir, primaryName);
   let bank = { found: false, questionCount: null, duplicateQuestions: [], malformed: [] };
+  const primaryPath = path.join(targetDir, primaryName);
   if (fs.existsSync(primaryPath)) {
     bank = parseDbQuestions(fs.readFileSync(primaryPath, 'utf8'));
-    if (bank.malformed.length) errors.push(primaryName + ': question bank structural issues: ' + bank.malformed.slice(0, 10).join(' | '));
-    if (bank.duplicateQuestions.length) warnings.push(primaryName + ': duplicate DB question prompts: ' + bank.duplicateQuestions.length);
   } else {
-    warnings.push('Primary file ' + primaryName + ' not found; DB-specific checks skipped.');
+    warnings.push('Primary file ' + primaryName + ' not found; primary DB-specific checks skipped.');
   }
   return {
     repository: repo, generatedAt: new Date().toISOString(), mode: 'free-read-only-audit',
-    files, bank, errors, warnings, passed: errors.length === 0
+    htmlFileCount: htmlFiles.length, files, bank, banks,
+    repeatedPromptGroupsAcrossDetectedBanks: [...uniquePromptCounts.entries()].filter(([, count]) => count > 1).length,
+    errors, warnings, passed: errors.length === 0
   };
 }
 
@@ -148,8 +176,11 @@ function main() {
     '- DB found: ' + report.bank.found,
     '- Topics: ' + (report.bank.topicCount ?? 'n/a'),
     '- Questions: ' + (report.bank.questionCount ?? 'n/a'),
-    '- Duplicate prompts: ' + (report.bank.duplicateQuestions?.length ?? 0),
-    '- Structural issues: ' + (report.bank.malformed?.length ?? 0),
+    '- Detected DB banks: ' + (report.banks?.length ?? 0),
+    '- DB question records across detected HTML files: ' + (report.banks || []).reduce((sum, item) => sum + (item.questionCount || 0), 0),
+    '- Duplicate prompts in primary DB: ' + (report.bank.duplicateQuestions?.length ?? 0),
+    '- Structural issues in primary DB: ' + (report.bank.malformed?.length ?? 0),
+    '- Repeated prompts across detected DB banks: ' + (report.repeatedPromptGroupsAcrossDetectedBanks ?? 0),
     '',
     '## Errors',
     ...(report.errors.length ? report.errors.map(e => '- ' + e) : ['- None']),
