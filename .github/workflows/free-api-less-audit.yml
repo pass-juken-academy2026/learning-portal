@@ -75,6 +75,32 @@ jobs:
           ref: main
           path: target
           persist-credentials: false
+      - name: Run existing content and export quality tests
+        shell: bash
+        working-directory: target
+        run: |
+          set -euo pipefail
+          found=0
+          for test in \
+            tests/pdf-export-audit.cjs \
+            tests/english-mock-pdf-export.test.cjs \
+            tests/common-test-audit.cjs \
+            tests/validate-entrance-bank.cjs \
+            tests/audit-bank-quality.cjs \
+            tests/validate-bank-data.cjs \
+            tests/validate-question-bank.cjs \
+            tests/validate-data.cjs \
+            tests/english-common-stimulus-content.test.cjs \
+            tests/audit-common-test-stimuli.test.cjs; do
+            if [ -f "$test" ]; then
+              found=1
+              echo "Running $test"
+              node "$test"
+            fi
+          done
+          if [ "$found" = "0" ]; then
+            echo "No recognized subject/export test files found; static audit remains limited."
+          fi
       - name: Run read-only audit
         env:
           TARGET_REPOSITORY: ${{ matrix.repository }}
