@@ -32,7 +32,7 @@ def inspect_text(text, path):
     # De-duplicate identical findings.
     seen=set(); unique=[]
     for item in out:
-        key=(item["path"],item["line"],item["reason"])
+        key=(item["path"],item["line"],item["severity"])
         if key not in seen: seen.add(key); unique.append(item)
     return unique
 def main():
@@ -47,6 +47,7 @@ def main():
         faint=inspect_text(".hint { opacity: 0.35; }","fixture.html")
         variables=inspect_text(":root{--paper:#fff;--ink:#18243a}body{background:var(--bg);color:var(--ink)}","fixture.html")
         assert any(x["severity"]=="high" for x in bad), bad
+        assert len([x for x in bad if x["severity"]=="high"]) == 1, bad
         assert not any(x["severity"]=="high" for x in good), good
         assert any("opacity" in x["reason"] for x in faint), faint
         assert not any(x["severity"]=="high" for x in variables), variables
