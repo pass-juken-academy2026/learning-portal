@@ -1,0 +1,85 @@
+name: Free API-less repository audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "35 20 * * 1"
+  pull_request:
+    paths:
+      - ".github/workflows/free-api-less-audit.yml"
+      - "scripts/free-audit.cjs"
+      - "tests/free-audit.test.cjs"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: free-api-less-audit
+  cancel-in-progress: false
+
+jobs:
+  test-auditor:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node tests/free-audit.test.cjs
+
+  audit:
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        repository:
+          - pass-juken-academy2026/english-study
+          - pass-juken-academy2026/math-juken-saitama
+          - pass-juken-academy2026/junior-japanese
+          - pass-juken-academy2026/junior-science
+          - pass-juken-academy2026/junior-social-studies
+          - pass-juken-academy2026/highschool-japanese
+          - pass-juken-academy2026/highschool-math
+          - pass-juken-academy2026/highschool-biology
+          - pass-juken-academy2026/highschool-social-studies
+          - pass-juken-academy2026/highschool-information
+          - pass-juken-academy2026/learning-portal
+    steps:
+      - name: Check out auditor
+        uses: actions/checkout@v4
+        with:
+          repository: pass-juken-academy2026/learning-portal
+          ref: main
+          path: auditor
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test auditor
+        run: node auditor/tests/free-audit.test.cjs
+      - name: Check out target repository (public read-only)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repository }}
+          ref: main
+          path: target
+          persist-credentials: false
+      - name: Run read-only audit
+        env:
+          TARGET_REPOSITORY: ${{ matrix.repository }}
+          TARGET_DIR: target
+          AUDIT_REPORT_PATH: audit-report.json
+        run: node auditor/scripts/free-audit.cjs | tee audit-report.md
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-report-${{ strategy.job-index }}
+          path: |
+            audit-report.json
+            audit-report.md
+          if-no-files-found: warn
+          retention-days: 30
