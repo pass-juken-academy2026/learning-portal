@@ -110,6 +110,8 @@ jobs:
       - name: Check changed-file scope and whitespace
         if: steps.maintenance.outputs.changed == 'true'
         working-directory: target
+        env:
+          TARGET_REPOSITORY: ${{ matrix.repository }}
         run: |
           set -euo pipefail
           git diff --check
