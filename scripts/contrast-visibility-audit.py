@@ -43,9 +43,11 @@ def main():
         bad=inspect_text(".choice { color: #fff;\\n background: #fff; }","fixture.html")
         good=inspect_text(".choice { color: #fff;\\n background: #123456; }","fixture.html")
         faint=inspect_text(".hint { opacity: 0.35; }","fixture.html")
+        variables=inspect_text(":root{--paper:#fff;--ink:#18243a}body{background:var(--bg);color:var(--ink)}","fixture.html")
         assert any(x["severity"]=="high" for x in bad), bad
         assert not any(x["severity"]=="high" for x in good), good
         assert any("opacity" in x["reason"] for x in faint), faint
+        assert not any(x["severity"]=="high" for x in variables), variables
         print("contrast visibility scanner self-test passed"); return 0
     exts={".html",".css"}
     findings=[]; files=[]
