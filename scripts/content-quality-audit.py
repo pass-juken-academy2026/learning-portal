@@ -163,7 +163,10 @@ def audit(root: Path) -> dict:
                 })
     return {
         "scope": str(root),
-        "scanned_file_count": len(scan_files),\n        "html_file_count": sum(1 for p in scan_files if p.suffix.lower() == ".html"),\n        "js_file_count": sum(1 for p in scan_files if p.suffix.lower() == ".js"),\n        "json_file_count": sum(1 for p in scan_files if p.suffix.lower() == ".json"),
+        "scanned_file_count": len(scan_files),
+        "html_file_count": sum(1 for p in scan_files if p.suffix.lower() == ".html"),
+        "js_file_count": sum(1 for p in scan_files if p.suffix.lower() == ".js"),
+        "json_file_count": sum(1 for p in scan_files if p.suffix.lower() == ".json"),
         "question_like_candidate_count": len(candidates),
         "exact_duplicate_groups": exact_duplicates,
         "near_duplicate_candidates": near_duplicates,
