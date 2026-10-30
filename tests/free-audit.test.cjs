@@ -9,6 +9,11 @@ assert.deepEqual(audited.duplicateIds, ['x']);
 assert.deepEqual(audited.localLinks, ['missing.html']);
 assert.equal(audited.inlineScripts.length, 1);
 
+const templated = '<main id="app"></main><script>const html = `<div id="dynamic"></div><input id="dynamic">`;</script>';
+const templateAudit = auditHtml(templated);
+assert.deepEqual(templateAudit.duplicateIds, []);
+assert.equal(templateAudit.inlineScripts.length, 1);
+
 const validDb = 'const DB={"topics":[{"name":"基礎"}],"questions":[{"topic":"基礎","q":"問題A","options":["A","B","C","D"],"a":0,"ex":"理由"}]},key=1;';
 const parsed = parseDbQuestions(validDb);
 assert.equal(parsed.found, true);

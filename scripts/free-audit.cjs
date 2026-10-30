@@ -16,13 +16,16 @@ function auditHtml(html, filename = 'index.html') {
   const ids = [];
   const links = [];
   const inlineScripts = [];
+  // HTML-looking strings inside JavaScript templates are not live DOM nodes.
+  // Ignore script bodies for static ID/link scans, but still syntax-check them below.
+  const htmlForStaticScan = html.replace(/<script\b([^>]*)>[\s\S]*?<\/script\s*>/gi, (whole, attrs) => '<script' + attrs + '></script>');
   const idPattern = /\bid\s*=\s*(["'])(.*?)\1/gi;
   let match;
-  while ((match = idPattern.exec(html))) ids.push(match[2]);
+  while ((match = idPattern.exec(htmlForStaticScan))) ids.push(match[2]);
   const duplicateIds = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
 
   const linkPattern = /<(?:a|script|link|img|iframe)\b[^>]*?(?:href|src)\s*=\s*(["'])(.*?)\1[^>]*>/gi;
-  while ((match = linkPattern.exec(html))) {
+  while ((match = linkPattern.exec(htmlForStaticScan))) {
     const url = match[2].trim();
     if (url && !/^(?:https?:|data:|mailto:|tel:|#|javascript:|\/\/)/i.test(url)) {
       links.push(url.split(/[?#]/)[0]);
