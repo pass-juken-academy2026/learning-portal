@@ -4,11 +4,11 @@ from __future__ import annotations
 import argparse, json, re
 from pathlib import Path
 
-COLOR = re.compile(r"(?:color|background(?:-color)?)\s*:\s*([^;}{]+)", re.I)
+COLOR = re.compile(r"(?<![A-Za-z-])(?:color|background(?:-color)?)\s*:\s*([^;}{]+)", re.I)
 WHITE = {"white", "#fff", "#ffffff", "rgb(255,255,255)", "rgb(255, 255, 255)"}
 PALE = {"#fefefe", "#fafafa", "#f8f8f8", "#f5f5f5", "#f0f0f0", "#fff", "#ffffff", "white", "ivory"}
 DARK = {"#000", "#000000", "#111", "#111111", "#222", "#222222", "#333", "#333333", "#444", "#444444", "black"}
-def norm(v): return re.sub(r"\s+", "", v.strip().lower())
+def norm(v): return re.sub(r"\s+", "", re.sub(r"!important\b", "", v.strip().lower()))
 def inspect_text(text, path):
     out=[]
     lines=text.splitlines()
