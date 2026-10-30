@@ -89,3 +89,29 @@ jobs:
             audit-report.md
           if-no-files-found: warn
           retention-days: 30
+
+  inventory-audit:
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out audit tools
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test inventory auditor
+        run: python scripts/automation-audit.py --self-test
+      - name: Run expanded read-only inventory audit
+        run: python scripts/automation-audit.py
+      - name: Upload inventory reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: expanded-inventory-audit
+          path: |
+            automation-reports/audit.json
+            automation-reports/audit.md
+          if-no-files-found: warn
+          retention-days: 30
