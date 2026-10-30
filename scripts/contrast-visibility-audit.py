@@ -18,7 +18,7 @@ def inspect_text(text, path):
         bg=[v for k,v in decls if re.match(r"background(?:-color)?\s*:",k,re.I)]
         if any(v in {norm(x) for x in WHITE} for v in fg) and any(v in {norm(x) for x in PALE} for v in bg):
             out.append({"path":str(path),"line":i,"severity":"high","reason":"explicit white/pale text with white/pale background in same declaration line","snippet":line.strip()[:240]})
-        if re.search(r"opacity\s*:\s*0\.[0-5]\b",line,re.I):
+        if re.search(r"opacity\\s*:\\s*0\\.[0-5]\\d*",line,re.I):
             out.append({"path":str(path),"line":i,"severity":"review","reason":"low opacity may reduce text contrast","snippet":line.strip()[:240]})
         if re.search(r"color\s*:\s*(?:#(?:eee|eeeeee|f{3,6})\b|white)\s*[;}].{0,160}background(?:-color)?\s*:\s*(?:#fff(?:fff)?\b|white)\b",line,re.I):
             out.append({"path":str(path),"line":i,"severity":"high","reason":"likely pale text on pale surface","snippet":line.strip()[:240]})
