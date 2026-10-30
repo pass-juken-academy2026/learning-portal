@@ -145,6 +145,7 @@ jobs:
       - name: Run content duplicate and missing-field triage
         if: always()
         run: python auditor/scripts/content-quality-audit.py --root target --output content-quality-audit.json > content-quality-audit.stdout.json
+      # Heuristic contrast triage is read-only; findings are candidates, not conformance verdicts.
       - name: Run low-contrast text triage
         if: always()
         run: python auditor/scripts/contrast-visibility-audit.py --root target --output contrast-visibility-audit.json > contrast-visibility-audit.stdout.json
