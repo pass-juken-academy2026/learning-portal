@@ -117,5 +117,9 @@ jobs:
           path: |
             automation-reports/audit.json
             automation-reports/audit.md
+            AUDIT_PHASE1_DATA_COUNTS_2026-10-29.md
+            AUDIT_COMMON_TEST_2026-10-28.md
+            AUDIT_GAP_CLASSIFICATION_AND_REBUILD_PLAN_2026-10-28.md
+            AUTOMATION.md
           if-no-files-found: warn
           retention-days: 30
