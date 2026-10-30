@@ -37,7 +37,6 @@ jobs:
           python-version: "3.12"
       - run: python scripts/automation-audit.py --self-test
       - run: python scripts/content-quality-audit.py --self-test
-      - run: python scripts/content-quality-audit.py --self-test
 
   audit:
     runs-on: ubuntu-latest
