@@ -47,6 +47,17 @@ def similarity(left: str, right: str) -> float:
         return 0.0
     return len(a & b) / len(a | b)
 
+def looks_like_prompt(value: str) -> bool:
+    """Reject obvious code/style/markup fragments before comparing candidate prompts."""
+    code_patterns = (
+        r"<\/?(?:option|script|style|div|p|section|button|input|a)\b",
+        r"(?:document|window)\.(?:querySelector|getElementById|createElement)",
+        r"\b(?:function|const|let|var)\s+[A-Za-z_$]",
+        r"=>|\.textContent|\.append(?:Child)?\(|URLSearchParams",
+        r":where\(|--[A-Za-z0-9_-]+\s*:|\{\s*(?:touch-action|display|color|margin|padding)\s*:",
+    )
+    return not any(re.search(pattern, value, re.I) for pattern in code_patterns)
+
 class TextCollector(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -83,7 +94,8 @@ class TextCollector(HTMLParser):
 def collect_candidates(source: str, path: str) -> list[dict]:
     parser = TextCollector()
     try:
-        parser.feed(source)
+        markup_only = re.sub(r"<(?:script|style)\\b[^>]*>.*?</(?:script|style)\\s*>", " ", source, flags=re.I | re.S)
+        parser.feed(markup_only)
     except Exception:
         pass
     candidates = []
@@ -100,7 +112,7 @@ def collect_candidates(source: str, path: str) -> list[dict]:
         cleaned = re.sub(r"\\[nrt]", " ", raw)
         cleaned = html.unescape(cleaned).strip()
         key = normalize(cleaned)
-        if len(key) >= 14 and len(cleaned) <= 700 and QUESTION_HINTS.search(cleaned) and key not in seen:
+        if len(key) >= 14 and len(cleaned) <= 700 and QUESTION_HINTS.search(cleaned) and looks_like_prompt(cleaned) and key not in seen:
             seen.add(key)
             candidates.append({"text": cleaned, "normalized": key, "file": path, "source": "question-like-string"})
     return candidates
@@ -175,6 +187,9 @@ def self_test() -> None:
     assert len(items) >= 1, f"expected a question-like candidate, got {len(items)}"
     assert normalize("ＡＢＣ　テスト！") == normalize("abc テスト")
     assert similarity("abcdefghi", "abcdefghj") > 0.5
+    assert not looks_like_prompt('button{min-height:42px}:where(button,a,input,select,textarea,[role=button])')
+    assert not looks_like_prompt(');function render(){const s=document.querySelector("x")')
+    assert looks_like_prompt('次の資料から、正しい説明を一つ選びなさい。')
     print("Content quality audit self-test passed.")
 
 def main() -> None:
