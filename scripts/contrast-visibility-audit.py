@@ -4,19 +4,21 @@ from __future__ import annotations
 import argparse, json, re
 from pathlib import Path
 
-COLOR = re.compile(r"(?:color|background(?:-color)?)\s*:\s*([^;}{]+)", re.I)
+COLOR = re.compile(r"(?<![A-Za-z-])(?:color|background(?:-color)?)\s*:\s*([^;}{]+)", re.I)
 WHITE = {"white", "#fff", "#ffffff", "rgb(255,255,255)", "rgb(255, 255, 255)"}
 PALE = {"#fefefe", "#fafafa", "#f8f8f8", "#f5f5f5", "#f0f0f0", "#fff", "#ffffff", "white", "ivory"}
 DARK = {"#000", "#000000", "#111", "#111111", "#222", "#222222", "#333", "#333333", "#444", "#444444", "black"}
-def norm(v): return re.sub(r"\s+", "", v.strip().lower())
+def norm(v): return re.sub(r"\s+", "", re.sub(r"!important\b", "", v.strip().lower()))
 def inspect_text(text, path):
     out=[]
     lines=text.splitlines()
     for i,line in enumerate(lines,1):
         decls=[(m.group(0),norm(m.group(1))) for m in COLOR.finditer(line)]
+        if re.search(r"opacity\s*:\s*0\.[0-5]\d*",line,re.I):
+            out.append({"path":str(path),"line":i,"severity":"review","reason":"low opacity may reduce text contrast","snippet":line.strip()[:240]})
         fg=[v for k,v in decls if re.match(r"color\s*:",k,re.I)]
         bg=[v for k,v in decls if re.match(r"background(?:-color)?\s*:",k,re.I)]
-        if re.search(r"color\s*:\s*(?:#(?:eee|eeeeee|f{3,6})\b|white)\s*[;}].{0,160}background(?:-color)?\s*:\s*(?:#fff(?:fff)?\b|white)\b",line,re.I):
+        if any(v in {norm(x) for x in WHITE} for v in fg) and any(v in {norm(x) for x in PALE} for v in bg):
             out.append({"path":str(path),"line":i,"severity":"high","reason":"likely pale text on pale surface","snippet":line.strip()[:240]})
     # Cross-line CSS rules can put foreground and background declarations on separate lines.
     joined="\n".join(lines)
@@ -30,7 +32,7 @@ def inspect_text(text, path):
     # De-duplicate identical findings.
     seen=set(); unique=[]
     for item in out:
-        key=(item["path"],item["line"],item["reason"])
+        key=(item["path"],item["line"],item["severity"])
         if key not in seen: seen.add(key); unique.append(item)
     return unique
 def main():
@@ -43,9 +45,12 @@ def main():
         bad=inspect_text(".choice { color: #fff;\n background: #fff; }","fixture.html")
         good=inspect_text(".choice { color: #fff;\n background: #123456; }","fixture.html")
         faint=inspect_text(".hint { opacity: 0.35; }","fixture.html")
+        variables=inspect_text(":root{--paper:#fff;--ink:#18243a}body{background:var(--bg);color:var(--ink)}","fixture.html")
         assert any(x["severity"]=="high" for x in bad), bad
+        assert len([x for x in bad if x["severity"]=="high"]) == 1, bad
         assert not any(x["severity"]=="high" for x in good), good
         assert any("opacity" in x["reason"] for x in faint), faint
+        assert not any(x["severity"]=="high" for x in variables), variables
         print("contrast visibility scanner self-test passed"); return 0
     exts={".html",".css"}
     findings=[]; files=[]
