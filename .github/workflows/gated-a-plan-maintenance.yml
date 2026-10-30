@@ -126,7 +126,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for test in tests/audit-bank-quality.cjs tests/validate-bank-data.cjs tests/validate-question-bank.cjs tests/validate-data.cjs; do
+          for test in tests/common-test-audit.cjs tests/validate-entrance-bank.cjs tests/audit-bank-quality.cjs tests/validate-bank-data.cjs tests/validate-question-bank.cjs tests/validate-data.cjs; do
             if [ -f "$test" ]; then
               echo "Running $test"
               node "$test"
