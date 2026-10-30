@@ -22,7 +22,7 @@ function auditHtml(html, filename = 'index.html') {
   const duplicateIds = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
 
   const linkPattern = /<(?:a|script|link|img|iframe)\b[^>]*?(?:href|src)\s*=\s*(["'])(.*?)\1[^>]*>/gi;
-  while ((match = linkPattern.exec(html))) {
+  while ((match = linkPattern.exec(htmlForStaticScan))) {
     const url = match[2].trim();
     if (url && !/^(?:https?:|data:|mailto:|tel:|#|javascript:|\/\/)/i.test(url)) {
       links.push(url.split(/[?#]/)[0]);
