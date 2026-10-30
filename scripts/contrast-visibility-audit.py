@@ -16,8 +16,9 @@ def inspect_text(text, path):
         decls=[(m.group(0),norm(m.group(1))) for m in COLOR.finditer(line)]
         if re.search(r"opacity\s*:\s*0\.[0-5]\d*",line,re.I):
             out.append({"path":str(path),"line":i,"severity":"review","reason":"low opacity may reduce text contrast","snippet":line.strip()[:240]})
-        fg=[v for k,v in decls if re.match(r"color\s*:",k,re.I)]
-        bg=[v for k,v in decls if re.match(r"background(?:-color)?\s*:",k,re.I)]
+        fg=[v for k,v in decls if re.match(r"color\\s*:",k,re.I)]
+        bg=[v for k,v in decls if re.match(r"background(?:-color)?\\s*:",k,re.I)]
+        if any(v in {norm(x) for x in WHITE} for v in fg) and any(v in {norm(x) for x in PALE} for v in bg):
             out.append({"path":str(path),"line":i,"severity":"high","reason":"likely pale text on pale surface","snippet":line.strip()[:240]})
     # Cross-line CSS rules can put foreground and background declarations on separate lines.
     joined="\n".join(lines)
@@ -41,8 +42,8 @@ def main():
     ap.add_argument("--self-test",action="store_true")
     a=ap.parse_args()
     if a.self_test:
-        bad=inspect_text(".choice { color: #fff;\\n background: #fff; }","fixture.html")
-        good=inspect_text(".choice { color: #fff;\\n background: #123456; }","fixture.html")
+        bad=inspect_text(".choice { color: #fff;\n background: #fff; }","fixture.html")
+        good=inspect_text(".choice { color: #fff;\n background: #123456; }","fixture.html")
         faint=inspect_text(".hint { opacity: 0.35; }","fixture.html")
         variables=inspect_text(":root{--paper:#fff;--ink:#18243a}body{background:var(--bg);color:var(--ink)}","fixture.html")
         assert any(x["severity"]=="high" for x in bad), bad
