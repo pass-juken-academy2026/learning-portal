@@ -37,7 +37,6 @@ jobs:
       - run: python scripts/automation-audit.py --self-test
 
   audit:
-    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -75,6 +74,60 @@ jobs:
           ref: main
           path: target
           persist-credentials: false
+      - name: Run existing question-bank quality tests
+        shell: bash
+        working-directory: target
+        run: |
+          set -euo pipefail
+          for test in \
+            tests/common-test-audit.cjs \
+            tests/validate-entrance-bank.cjs \
+            tests/audit-bank-quality.cjs \
+            tests/validate-bank-data.cjs \
+            tests/validate-question-bank.cjs \
+            tests/validate-data.cjs \
+            tests/english-common-stimulus-content.test.cjs \
+            tests/audit-common-test-stimuli.test.cjs; do
+            if [ -f "$test" ]; then
+              echo "Running $test"
+              node "$test"
+            fi
+          done
+      - name: Install Playwright for PDF/export tests
+        if: ${{ hashFiles('target/tests/pdf-export-audit.cjs', 'target/tests/english-mock-pdf-export.test.cjs') != '' }}
+        run: npm install --no-save playwright
+        timeout-minutes: 5
+      - name: Install Chromium dependencies for PDF/export tests
+        if: ${{ hashFiles('target/tests/pdf-export-audit.cjs', 'target/tests/english-mock-pdf-export.test.cjs') != '' }}
+        run: npx playwright install-deps chromium
+        timeout-minutes: 10
+      - name: Install Chromium for PDF/export tests
+        if: ${{ hashFiles('target/tests/pdf-export-audit.cjs', 'target/tests/english-mock-pdf-export.test.cjs') != '' }}
+        run: npx playwright install chromium
+        timeout-minutes: 5
+      - name: Start target static server for export tests
+        if: ${{ hashFiles('target/tests/pdf-export-audit.cjs', 'target/tests/english-mock-pdf-export.test.cjs') != '' }}
+        working-directory: target
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/target-export-server.log 2>&1 &
+          for i in $(seq 1 20); do
+            if curl --silent --fail http://127.0.0.1:4173/index.html > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/target-export-server.log
+          exit 1
+      - name: Run browser-level PDF and text export tests
+        if: ${{ hashFiles('target/tests/pdf-export-audit.cjs', 'target/tests/english-mock-pdf-export.test.cjs') != '' }}
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test in tests/pdf-export-audit.cjs tests/english-mock-pdf-export.test.cjs; do
+            if [ -f "$test" ]; then
+              echo "Running $test"
+              node "$test"
+            fi
+          done
       - name: Run read-only audit
         env:
           TARGET_REPOSITORY: ${{ matrix.repository }}
@@ -117,5 +170,9 @@ jobs:
           path: |
             automation-reports/audit.json
             automation-reports/audit.md
+            AUDIT_PHASE1_DATA_COUNTS_2026-10-29.md
+            AUDIT_COMMON_TEST_2026-10-28.md
+            AUDIT_GAP_CLASSIFICATION_AND_REBUILD_PLAN_2026-10-28.md
+            AUTOMATION.md
           if-no-files-found: warn
           retention-days: 30
