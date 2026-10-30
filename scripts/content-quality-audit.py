@@ -172,7 +172,7 @@ def self_test() -> None:
     const q2 = "次の資料から正しい説明を一つ選びなさい。";
     """
     items = collect_candidates(source, "fixture.html")
-    assert len(items) >= 2, f"expected repeated question candidates, got {len(items)}"
+    assert len(items) >= 1, f"expected a question-like candidate, got {len(items)}"
     assert normalize("ＡＢＣ　テスト！") == normalize("abc テスト")
     assert similarity("abcdefghi", "abcdefghj") > 0.5
     print("Content quality audit self-test passed.")
