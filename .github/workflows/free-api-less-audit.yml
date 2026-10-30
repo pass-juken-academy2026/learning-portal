@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/free-api-less-audit.yml"
       - "scripts/content-quality-audit.py"
+      - "scripts/contrast-visibility-audit.py"
   schedule:
     - cron: "35 20 * * 1"
   pull_request:
@@ -15,6 +16,7 @@ on:
       - "scripts/free-audit.cjs"
       - "tests/free-audit.test.cjs"
       - "scripts/content-quality-audit.py"
+      - "scripts/contrast-visibility-audit.py"
 
 permissions:
   contents: read
