@@ -9,32 +9,32 @@ const os = require('node:os');
 const { spawnSync } = require('node:child_process');
 
 function normalize(value) {
-  return String(value ?? '').normalize('NFKC').toLocaleLowerCase('ja-JP').replace(/\\s+/g, ' ').trim();
+  return String(value ?? '').normalize('NFKC').toLocaleLowerCase('ja-JP').replace(/\s+/g, ' ').trim();
 }
 
 function auditHtml(html, filename = 'index.html') {
   const ids = [];
   const links = [];
   const inlineScripts = [];
-  const idPattern = /\\bid\\s*=\\s*(["'])(.*?)\\1/gi;
+  const idPattern = /\bid\s*=\s*(["'])(.*?)\1/gi;
   let match;
   while ((match = idPattern.exec(html))) ids.push(match[2]);
   const duplicateIds = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
 
-  const linkPattern = /<(?:a|script|link|img|iframe)\\b[^>]*?(?:href|src)\\s*=\\s*(["'])(.*?)\\1[^>]*>/gi;
+  const linkPattern = /<(?:a|script|link|img|iframe)\b[^>]*?(?:href|src)\s*=\s*(["'])(.*?)\1[^>]*>/gi;
   while ((match = linkPattern.exec(html))) {
     const url = match[2].trim();
-    if (url && !/^(?:https?:|data:|mailto:|tel:|#|javascript:|\\/\\/)/i.test(url)) {
+    if (url && !/^(?:https?:|data:|mailto:|tel:|#|javascript:|\/\/)/i.test(url)) {
       links.push(url.split(/[?#]/)[0]);
     }
   }
 
-  const scriptPattern = /<script\\b([^>]*)>([\\s\\S]*?)<\\/script\\s*>/gi;
+  const scriptPattern = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
   while ((match = scriptPattern.exec(html))) {
     const attrs = match[1] || '';
     const body = match[2] || '';
-    const external = /\\bsrc\\s*=/.test(attrs);
-    const typeMatch = attrs.match(/\\btype\\s*=\\s*(["'])(.*?)\\1/i);
+    const external = /\bsrc\s*=/.test(attrs);
+    const typeMatch = attrs.match(/\btype\s*=\s*(["'])(.*?)\1/i);
     const type = typeMatch ? typeMatch[2].toLowerCase() : '';
     if (!external && body.trim() && (!type || ['text/javascript', 'application/javascript', 'module'].includes(type))) {
       inlineScripts.push(body);
@@ -129,7 +129,7 @@ function main() {
   const repo = process.env.TARGET_REPOSITORY || 'unknown';
   const targetDir = path.resolve(process.env.TARGET_DIR || process.cwd());
   const report = runAudit(targetDir, repo);
-  const json = JSON.stringify(report, null, 2) + '\\n';
+  const json = JSON.stringify(report, null, 2) + '\n';
   const md = [
     '# Free automated audit',
     '',
@@ -154,7 +154,7 @@ function main() {
     '## Warnings',
     ...(report.warnings.length ? report.warnings.map(w => '- ' + w) : ['- None']),
     ''
-  ].join('\\n');
+  ].join('\n');
   const reportPath = process.env.AUDIT_REPORT_PATH;
   if (reportPath) fs.writeFileSync(reportPath, json, 'utf8');
   console.log(md);
