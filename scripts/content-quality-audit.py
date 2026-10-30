@@ -50,11 +50,11 @@ def similarity(left: str, right: str) -> float:
 def looks_like_prompt(value: str) -> bool:
     """Reject obvious code/style/markup fragments before comparing candidate prompts."""
     code_patterns = (
-        r"<\\/?(?:option|script|style|div|p|section|button|input|a)\\b",
-        r"(?:document|window)\\.(?:querySelector|getElementById|createElement)",
-        r"\\b(?:function|const|let|var)\\s+[A-Za-z_$]",
-        r"=>|\\.textContent|\\.append(?:Child)?\\(|URLSearchParams",
-        r":where\\(|--[A-Za-z0-9_-]+\\s*:|\\{\\s*(?:touch-action|display|color|margin|padding)\\s*:",
+        r"<\/?(?:option|script|style|div|p|section|button|input|a)\b",
+        r"(?:document|window)\.(?:querySelector|getElementById|createElement)",
+        r"\b(?:function|const|let|var)\s+[A-Za-z_$]",
+        r"=>|\.textContent|\.append(?:Child)?\(|URLSearchParams",
+        r":where\(|--[A-Za-z0-9_-]+\s*:|\{\s*(?:touch-action|display|color|margin|padding)\s*:",
     )
     return not any(re.search(pattern, value, re.I) for pattern in code_patterns)
 
