@@ -94,7 +94,7 @@ class TextCollector(HTMLParser):
 def collect_candidates(source: str, path: str) -> list[dict]:
     parser = TextCollector()
     try:
-        markup_only = re.sub(r"<(?:script|style)\\b[^>]*>.*?</(?:script|style)\\s*>", " ", source, flags=re.I | re.S)
+        markup_only = re.sub(r"<(?:script|style)\b[^>]*>.*?</(?:script|style)\s*>", " ", source, flags=re.I | re.S)
         parser.feed(markup_only)
     except Exception:
         pass
@@ -103,7 +103,7 @@ def collect_candidates(source: str, path: str) -> list[dict]:
     for value in parser.candidates:
         cleaned = re.sub(r"\s+", " ", value).strip()
         key = normalize(cleaned)
-        if len(key) >= 14 and QUESTION_HINTS.search(cleaned) and key not in seen:
+        if len(key) >= 14 and QUESTION_HINTS.search(cleaned) and looks_like_prompt(cleaned) and key not in seen:
             seen.add(key)
             candidates.append({"text": cleaned, "normalized": key, "file": path, "source": "question-marked-element"})
     # Inline data banks often keep prompts as string literals rather than marked HTML.
@@ -118,11 +118,11 @@ def collect_candidates(source: str, path: str) -> list[dict]:
     return candidates
 
 def audit(root: Path) -> dict:
-    html_files = sorted(p for p in root.rglob("*.html") if ".git" not in p.parts)
+    scan_files = sorted(p for suffix in ("*.html", "*.js", "*.json") for p in root.rglob(suffix) if ".git" not in p.parts)
     candidates = []
     missing_fields = []
     rights_flags = []
-    for path in html_files:
+    for path in scan_files:
         source = path.read_text(encoding="utf-8", errors="replace")
         rel = str(path.relative_to(root))
         candidates.extend(collect_candidates(source, rel))
@@ -163,7 +163,10 @@ def audit(root: Path) -> dict:
                 })
     return {
         "scope": str(root),
-        "html_file_count": len(html_files),
+        "scanned_file_count": len(scan_files),
+        "html_file_count": sum(1 for p in scan_files if p.suffix.lower() == ".html"),
+        "js_file_count": sum(1 for p in scan_files if p.suffix.lower() == ".js"),
+        "json_file_count": sum(1 for p in scan_files if p.suffix.lower() == ".json"),
         "question_like_candidate_count": len(candidates),
         "exact_duplicate_groups": exact_duplicates,
         "near_duplicate_candidates": near_duplicates,

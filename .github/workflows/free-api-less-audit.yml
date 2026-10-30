@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/free-api-less-audit.yml"
+      - "scripts/content-quality-audit.py"
   schedule:
     - cron: "35 20 * * 1"
   pull_request:
