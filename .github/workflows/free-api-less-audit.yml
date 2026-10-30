@@ -72,7 +72,9 @@ jobs:
           TARGET_REPOSITORY: ${{ matrix.repository }}
           TARGET_DIR: target
           AUDIT_REPORT_PATH: audit-report.json
-        run: node auditor/scripts/free-audit.cjs | tee audit-report.md
+        run: |
+          set -o pipefail
+          node auditor/scripts/free-audit.cjs | tee audit-report.md
       - name: Upload audit report
         if: always()
         uses: actions/upload-artifact@v4
