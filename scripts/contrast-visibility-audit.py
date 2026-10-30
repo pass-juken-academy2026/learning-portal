@@ -14,9 +14,10 @@ def inspect_text(text, path):
     lines=text.splitlines()
     for i,line in enumerate(lines,1):
         decls=[(m.group(0),norm(m.group(1))) for m in COLOR.finditer(line)]
+        if re.search(r"opacity\s*:\s*0\.[0-5]\d*",line,re.I):
+            out.append({"path":str(path),"line":i,"severity":"review","reason":"low opacity may reduce text contrast","snippet":line.strip()[:240]})
         fg=[v for k,v in decls if re.match(r"color\s*:",k,re.I)]
         bg=[v for k,v in decls if re.match(r"background(?:-color)?\s*:",k,re.I)]
-        if re.search(r"color\s*:\s*(?:#(?:eee|eeeeee|f{3,6})\b|white)\s*[;}].{0,160}background(?:-color)?\s*:\s*(?:#fff(?:fff)?\b|white)\b",line,re.I):
             out.append({"path":str(path),"line":i,"severity":"high","reason":"likely pale text on pale surface","snippet":line.strip()[:240]})
     # Cross-line CSS rules can put foreground and background declarations on separate lines.
     joined="\n".join(lines)
