@@ -7,4 +7,4 @@ permissions:
   contents: read
 jobs:
   daily-audit:
-    uses: pass-juken-academy2026/learning-portal/.github/workflows/daily-audit.yml@main
+    uses: pass-juken-academy2026/learning-portal/.github/workflows/daily-audit.yml@b91f6df36bdb70c88bd6003b35d1d3dee01852a1
