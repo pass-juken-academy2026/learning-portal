@@ -22,11 +22,11 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Validate workflow YAML syntax
         run: ruby -e "require 'yaml'; YAML.parse_file('.github/workflows/gated-a-plan-maintenance.yml'); puts 'Workflow YAML syntax passed.'"
       - name: Test A-plan maintenance safety gates
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
       - run: node tests/daily-maintenance.test.cjs
@@ -52,14 +52,14 @@ jobs:
           - pass-juken-academy2026/learning-portal
     steps:
       - name: Check out automation scripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: pass-juken-academy2026/learning-portal
           ref: main
           token: ${{ github.token }}
           path: orchestrator
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
       - name: Test maintenance safety gates
@@ -82,7 +82,7 @@ jobs:
           fi
       - name: Check out approved target repository
         if: steps.gate.outputs.enabled == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ matrix.repository }}
           token: ${{ secrets.CROSS_REPO_TOKEN }}
