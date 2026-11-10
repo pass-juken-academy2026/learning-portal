@@ -64,22 +64,13 @@ jobs:
           node-version: "22"
       - name: Test maintenance safety gates
         run: node orchestrator/tests/daily-maintenance.test.cjs
-      - name: Evaluate write credentials before checking out target repositories
+      - name: Keep paid A-plan API maintenance disabled (free-only policy)
         id: gate
         shell: bash
-        env:
-          A_PLAN_WRITE_ENABLED: ${{ secrets.A_PLAN_WRITE_ENABLED }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          CROSS_REPO_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
         run: |
           set -euo pipefail
-          if [ "$A_PLAN_WRITE_ENABLED" = "true" ] && [ -n "$OPENAI_API_KEY" ] && [ -n "$CROSS_REPO_TOKEN" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-            echo "All write gates are present; target repository checkout is allowed."
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "A-plan is validation-only: configure A_PLAN_WRITE_ENABLED=true, OPENAI_API_KEY, and CROSS_REPO_TOKEN to enable question proposals."
-          fi
+          echo "enabled=false" >> "$GITHUB_OUTPUT"
+          echo "A-plan API maintenance is disabled by the free-only policy. Validation-only checks may run; no paid API calls or repository writes are enabled."
       - name: Check out approved target repository
         if: steps.gate.outputs.enabled == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
