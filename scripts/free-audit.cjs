@@ -67,8 +67,17 @@ function parseDbQuestions(html) {
     if (!q || typeof q !== 'object') malformed.push('Question ' + i + ' is not an object.');
     else {
       if (!key) malformed.push('Question ' + i + ' has no prompt.');
-      if (!Array.isArray(q.options) || q.options.length < 2 || q.options.some(v => typeof v !== 'string' || !v.trim())) malformed.push('Question ' + i + ' has invalid options.');
-      if (!Number.isInteger(q.a) || q.a < 0 || q.a >= (Array.isArray(q.options) ? q.options.length : 0)) malformed.push('Question ' + i + ' has invalid answer index.');
+      const type = q.type || 'choice';
+      if (type === 'choice' || type === 'tf') {
+        if (!Array.isArray(q.options) || q.options.length < 2 || q.options.some(v => typeof v !== 'string' || !v.trim())) malformed.push('Question ' + i + ' has invalid options.');
+        if (!Number.isInteger(q.a) || q.a < 0 || q.a >= (Array.isArray(q.options) ? q.options.length : 0)) malformed.push('Question ' + i + ' has invalid answer index.');
+      } else if (type === 'fill') {
+        const hasAnswer = typeof q.answer === 'string' && q.answer.trim().length > 0;
+        const hasAnswers = Array.isArray(q.answers) && q.answers.some(v => typeof v === 'string' && v.trim().length > 0);
+        if (!hasAnswer && !hasAnswers) malformed.push('Question ' + i + ' has no valid fill-in answer.');
+      } else {
+        malformed.push('Question ' + i + ' has unsupported type: ' + String(type) + '.');
+      }
       if (typeof q.ex !== 'string' || !q.ex.trim()) malformed.push('Question ' + i + ' has no explanation.');
     }
   });
