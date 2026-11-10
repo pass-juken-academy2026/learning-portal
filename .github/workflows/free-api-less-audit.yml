@@ -8,6 +8,8 @@ on:
       - ".github/workflows/free-api-less-audit.yml"
       - "scripts/content-quality-audit.py"
       - "scripts/contrast-visibility-audit.py"
+      - "scripts/free-audit.cjs"
+      - "tests/free-audit.test.cjs"
   schedule:
     - cron: "35 20 * * 1"
   pull_request:
