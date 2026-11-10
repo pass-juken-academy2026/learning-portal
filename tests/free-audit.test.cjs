@@ -19,6 +19,16 @@ const parsed = parseDbQuestions(validDb);
 assert.equal(parsed.found, true);
 assert.equal(parsed.questionCount, 1);
 assert.deepEqual(parsed.malformed, []);
+const fillDb = 'const DB={"topics":[],"questions":[{"type":"fill","q":"空欄問題","answer":"対比","answers":["対比","比較"],"ex":"前後の関係を確認する。"}]},key=1;';
+const fillParsed = parseDbQuestions(fillDb);
+assert.deepEqual(fillParsed.malformed, []);
+
+const invalidFillDb = 'const DB={"topics":[],"questions":[{"type":"fill","q":"空欄問題","answers":[],"ex":"説明"}]},key=1;';
+assert.ok(parseDbQuestions(invalidFillDb).malformed.some(message => message.includes('fill-in answer')));
+
+const invalidTypeDb = 'const DB={"topics":[],"questions":[{"type":"essay","q":"記述問題","answer":"答え","ex":"説明"}]},key=1;';
+assert.ok(parseDbQuestions(invalidTypeDb).malformed.some(message => message.includes('unsupported type')));
+
 
 const duplicateDb = 'const DB={"topics":[],"questions":[{"q":"同じ問題","options":["A","B"],"a":0,"ex":"説明"},{"q":" 同じ問題 ","options":["A","B"],"a":9,"ex":""}]},key=1;';
 const duplicateParsed = parseDbQuestions(duplicateDb);
