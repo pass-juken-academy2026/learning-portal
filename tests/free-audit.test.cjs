@@ -29,6 +29,9 @@ assert.ok(riskyAudit.errors.some(message => message.includes('dynamic-code')));
 assert.ok(riskyAudit.warnings.some(message => message.includes('innerHTML')));
 assert.ok(riskyAudit.warnings.some(message => message.includes('Subresource Integrity')));
 assert.ok(riskyAudit.warnings.some(message => message.includes('rel=noopener')));
+const printWindowAudit = auditSecurityPrivacy('<script>win.document.write(escapedHtml);</script>', 'print.html');
+assert.deepEqual(printWindowAudit.errors, []);
+assert.ok(printWindowAudit.warnings.some(message => message.includes('document.write')));
 
 const validDb = 'const DB={"topics":[{"name":"基礎"}],"questions":[{"topic":"基礎","q":"問題A","options":["A","B","C","D"],"a":0,"ex":"理由"}]},key=1;';
 const parsed = parseDbQuestions(validDb);
