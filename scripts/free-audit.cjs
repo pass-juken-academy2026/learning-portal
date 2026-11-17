@@ -146,7 +146,9 @@ function auditSecurityPrivacy(html, filename = 'index.html') {
     .filter(match => !/\brel\s*=\s*(["'])[^"']*\bnoopener\b[^"']*\1/i.test((match[1] || '') + ' ' + (match[3] || '')));
   if (unsafeBlankLinks.length) warnings.push(filename + ': ' + unsafeBlankLinks.length + ' target=_blank link(s) lack rel=noopener.');
 
-  return { errors, warnings, piiFieldCount: piiFields.length, formCount: forms.length, externalScriptCount: externalScripts.filter(match => /\bsrc\s*=/.test(match[1] || '')).length };
+  const scriptSrcCount = externalScripts.filter(match => /\bsrc\s*=/.test(match[1] || '')).length;
+  const remoteScriptCount = externalScripts.filter(match => /^https?:\/\//i.test(match[1]?.match(/\bsrc\s*=\s*(["'])(.*?)\1/i)?.[2] || '')).length;
+  return { errors, warnings, piiFieldCount: piiFields.length, formCount: forms.length, scriptSrcCount, remoteScriptCount };
 }
 
 function walkHtmlFiles(root, relative = '') {
@@ -237,7 +239,8 @@ function main() {
     '## Security and privacy',
     '- Possible PII input fields: ' + report.files.reduce((sum, f) => sum + (f.security?.piiFieldCount || 0), 0),
     '- Forms: ' + report.files.reduce((sum, f) => sum + (f.security?.formCount || 0), 0),
-    '- External scripts: ' + report.files.reduce((sum, f) => sum + (f.security?.externalScriptCount || 0), 0),
+    '- Script src references (including local files): ' + report.files.reduce((sum, f) => sum + (f.security?.scriptSrcCount || 0), 0),
+    '- Remote script URLs: ' + report.files.reduce((sum, f) => sum + (f.security?.remoteScriptCount || 0), 0),
     '- Network/dynamic-code/PII submission findings are errors; innerHTML and missing SRI are warnings.',
     '',
     '## Question bank',
