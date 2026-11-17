@@ -25,7 +25,7 @@ assert.ok(riskyAudit.errors.some(message => message.includes('personal-informati
 assert.ok(riskyAudit.errors.some(message => message.includes('submission action')));
 assert.ok(riskyAudit.errors.some(message => message.includes('POST')));
 assert.ok(riskyAudit.errors.some(message => message.includes('network-request API')));
-assert.ok(riskyAudit.errors.some(message => message.includes('dynamic-code')));
+assert.ok(riskyAudit.errors.some(message => message.includes('eval or new Function')));
 assert.ok(riskyAudit.warnings.some(message => message.includes('innerHTML')));
 assert.ok(riskyAudit.warnings.some(message => message.includes('Subresource Integrity')));
 assert.ok(riskyAudit.warnings.some(message => message.includes('rel=noopener')));
