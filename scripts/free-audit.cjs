@@ -99,6 +99,53 @@ function checkScriptSyntax(scripts) {
   return failures;
 }
 
+function auditSecurityPrivacy(html, filename = 'index.html') {
+  const errors = [];
+  const warnings = [];
+  const piiPattern = /<(?:input|textarea|select)\b[^>]*(?:\btype\s*=\s*["']?(?:email|tel|password)\b|\bname\s*=\s*["'][^"']*(?:email|phone|tel|address|name|user|token|password|birth)[^"']*["']|\bautocomplete\s*=\s*["']?(?:email|tel|name|username|bday))/gi;
+  const piiFields = [...html.matchAll(piiPattern)].map(match => match[0].slice(0, 180));
+  if (piiFields.length) errors.push(filename + ': possible personal-information input fields: ' + piiFields.slice(0, 5).join(' | '));
+
+  const forms = [...html.matchAll(/<form\b([^>]*)>/gi)];
+  forms.forEach((match, index) => {
+    const attrs = match[1] || '';
+    const action = attrs.match(/\baction\s*=\s*(["'])(.*?)\1/i)?.[2]?.trim() || '';
+    const method = attrs.match(/\bmethod\s*=\s*(["'])(.*?)\1/i)?.[2]?.trim().toLowerCase() || '';
+    if (action && action !== '#') errors.push(filename + ': form ' + (index + 1) + ' has a submission action.');
+    if (method === 'post') errors.push(filename + ': form ' + (index + 1) + ' uses POST submission.');
+  });
+
+  const externalScripts = [...html.matchAll(/<script\b([^>]*)>/gi)];
+  externalScripts.forEach((match) => {
+    const attrs = match[1] || '';
+    const src = attrs.match(/\bsrc\s*=\s*(["'])(.*?)\1/i)?.[2] || '';
+    if (/^https?:\/\//i.test(src) && !/\bintegrity\s*=\s*(["'])[^"']+\1/i.test(attrs)) {
+      warnings.push(filename + ': external script ' + src + ' has no Subresource Integrity attribute.');
+    }
+  });
+
+  const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)]
+    .filter(match => !/\bsrc\s*=/.test(match[1] || ''))
+    .map(match => match[2] || '');
+  scripts.forEach((source, index) => {
+    if (/\bfetch\s*\(|\bXMLHttpRequest\b|\bsendBeacon\s*\(|\bWebSocket\b/i.test(source)) {
+      errors.push(filename + ': inline script ' + (index + 1) + ' contains a network-request API; verify that no study or personal data is transmitted.');
+    }
+    if (/\beval\s*\(|new\s+Function\s*\(|document\.write\s*\(/i.test(source)) {
+      errors.push(filename + ': inline script ' + (index + 1) + ' uses a dynamic-code or document.write API.');
+    }
+    if (/\.innerHTML\s*(?:=|\+=)/i.test(source)) {
+      warnings.push(filename + ': inline script ' + (index + 1) + ' uses innerHTML and needs a manual XSS/data-source review.');
+    }
+  });
+
+  const unsafeBlankLinks = [...html.matchAll(/<a\b([^>]*)target\s*=\s*(["'])_blank\2([^>]*)>/gi)]
+    .filter(match => !/\brel\s*=\s*(["'])[^"']*\bnoopener\b[^"']*\1/i.test((match[1] || '') + ' ' + (match[3] || '')));
+  if (unsafeBlankLinks.length) warnings.push(filename + ': ' + unsafeBlankLinks.length + ' target=_blank link(s) lack rel=noopener.');
+
+  return { errors, warnings, piiFieldCount: piiFields.length, formCount: forms.length, externalScriptCount: externalScripts.filter(match => /\bsrc\s*=/.test(match[1] || '')).length };
+}
+
 function walkHtmlFiles(root, relative = '') {
   const base = path.join(root, relative);
   const found = [];
@@ -123,6 +170,9 @@ function runAudit(targetDir, repo) {
     const html = fs.readFileSync(full, 'utf8');
     const result = auditHtml(html, relativeName.split(path.sep).join('/'));
     const syntaxFailures = checkScriptSyntax(result.inlineScripts);
+    const security = auditSecurityPrivacy(html, relativeName.split(path.sep).join('/'));
+    errors.push(...security.errors);
+    warnings.push(...security.warnings);
     const missingLinks = result.localLinks.filter(link =>
       link && !fs.existsSync(path.resolve(path.dirname(full), link)) &&
       !path.isAbsolute(link) && !link.startsWith('/')
@@ -133,7 +183,7 @@ function runAudit(targetDir, repo) {
     files.push({
       filename: relativeName.split(path.sep).join('/'), bytes: result.bytes, idCount: result.idCount,
       duplicateIds: result.duplicateIds, inlineScriptCount: result.inlineScripts.length,
-      inlineScriptFailures: syntaxFailures, missingLocalLinks: [...new Set(missingLinks)]
+      inlineScriptFailures: syntaxFailures, missingLocalLinks: [...new Set(missingLinks)], security
     });
     const bank = parseDbQuestions(html);
     if (bank.found) {
@@ -181,6 +231,12 @@ function main() {
     '## Files',
     ...report.files.map(f => '- ' + f.filename + ': ' + f.bytes + ' bytes, ' + f.idCount + ' IDs, ' + f.inlineScriptCount + ' inline scripts, ' + f.inlineScriptFailures.length + ' syntax failures'),
     '',
+    '## Security and privacy',
+    '- Possible PII input fields: ' + report.files.reduce((sum, f) => sum + (f.security?.piiFieldCount || 0), 0),
+    '- Forms: ' + report.files.reduce((sum, f) => sum + (f.security?.formCount || 0), 0),
+    '- External scripts: ' + report.files.reduce((sum, f) => sum + (f.security?.externalScriptCount || 0), 0),
+    '- Network/dynamic-code/PII submission findings are errors; innerHTML and missing SRI are warnings.',
+    '',
     '## Question bank',
     '- DB found: ' + report.bank.found,
     '- Topics: ' + (report.bank.topicCount ?? 'n/a'),
@@ -205,4 +261,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { normalize, auditHtml, parseDbQuestions, checkScriptSyntax, runAudit };
+module.exports = { normalize, auditHtml, auditSecurityPrivacy, parseDbQuestions, checkScriptSyntax, runAudit };
