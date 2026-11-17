@@ -11,7 +11,7 @@ const slots = [
   ['pass-juken-academy2026/junior-science', 'db-question'],
   ['pass-juken-academy2026/junior-social-studies', 'db-question'],
   ['pass-juken-academy2026/highschool-japanese', 'japanese-case'],
-  ['pass-juken-academy2026/highschool-biology', 'biology-row4'],
+  ['pass-juken-academy2026/highschool-science', 'biology-row4'],
   ['pass-juken-academy2026/highschool-information', 'db-question'],
   ['pass-juken-academy2026/highschool-math', 'practice-row4'],
   ['pass-juken-academy2026/highschool-math', 'linked-common-set'],
