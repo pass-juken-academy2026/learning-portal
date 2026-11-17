@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const { normalize, auditHtml, parseDbQuestions } = require('../scripts/free-audit.cjs');
+const { normalize, auditHtml, auditSecurityPrivacy, parseDbQuestions } = require('../scripts/free-audit.cjs');
 
 assert.equal(normalize('  Ａ   B  '), 'a b');
 const html = '<div id="x"></div><div id="x"></div><script>const a = 1;</script><a href="missing.html">x</a>';
@@ -13,6 +13,22 @@ const templated = '<main id="app"></main><script>const html = `<div id="dynamic"
 const templateAudit = auditHtml(templated);
 assert.deepEqual(templateAudit.duplicateIds, []);
 assert.equal(templateAudit.inlineScripts.length, 1);
+
+const localOnlyFeedback = '<form id="form"><select id="site"></select><textarea id="detail"></textarea></form><script>out.textContent = detail.value;</script>';
+const localOnlyAudit = auditSecurityPrivacy(localOnlyFeedback, 'feedback.html');
+assert.deepEqual(localOnlyAudit.errors, []);
+assert.equal(localOnlyAudit.formCount, 1);
+
+const riskyPage = '<form action="https://example.test/collect" method="post"><input type="email" name="email"></form><script>fetch("/submit"); target.innerHTML = userInput; eval(code);</script><script src="https://cdn.example.test/app.js"></script><a href="https://example.test" target="_blank">open</a>';
+const riskyAudit = auditSecurityPrivacy(riskyPage, 'risky.html');
+assert.ok(riskyAudit.errors.some(message => message.includes('personal-information input')));
+assert.ok(riskyAudit.errors.some(message => message.includes('submission action')));
+assert.ok(riskyAudit.errors.some(message => message.includes('POST')));
+assert.ok(riskyAudit.errors.some(message => message.includes('network-request API')));
+assert.ok(riskyAudit.errors.some(message => message.includes('dynamic-code')));
+assert.ok(riskyAudit.warnings.some(message => message.includes('innerHTML')));
+assert.ok(riskyAudit.warnings.some(message => message.includes('Subresource Integrity')));
+assert.ok(riskyAudit.warnings.some(message => message.includes('rel=noopener')));
 
 const validDb = 'const DB={"topics":[{"name":"基礎"}],"questions":[{"topic":"基礎","q":"問題A","options":["A","B","C","D"],"a":0,"ex":"理由"}]},key=1;';
 const parsed = parseDbQuestions(validDb);
