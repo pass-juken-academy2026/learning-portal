@@ -154,7 +154,7 @@ function targetFor(repo, day) {
     { repo: 'pass-juken-academy2026/junior-science', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/junior-social-studies', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/highschool-japanese', target: { file: 'index.html', kind: 'japanese-case' } },
-    { repo: 'pass-juken-academy2026/highschool-biology', target: { file: 'index.html', kind: 'biology-row4', marker: 'qs:' } },
+    { repo: 'pass-juken-academy2026/highschool-science', target: { file: 'index.html', kind: 'biology-row4', marker: 'qs:' } },
     { repo: 'pass-juken-academy2026/highschool-information', target: { file: 'index.html', kind: 'db-question' } },
     { repo: 'pass-juken-academy2026/highschool-math', target: { file: 'practice.html', kind: 'practice-row4', marker: 'const BANK=' } },
     { repo: 'pass-juken-academy2026/highschool-math', target: { file: 'practice.html', kind: 'linked-common-set', marker: 'const COMMON_TEST=', stimuliMarker: 'const COMMON_STIMULI=' } },
