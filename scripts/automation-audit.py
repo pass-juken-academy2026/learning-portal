@@ -27,7 +27,7 @@ REPOS = [
     "pass-juken-academy2026/junior-social-studies",
     "pass-juken-academy2026/highschool-japanese",
     "pass-juken-academy2026/highschool-math",
-    "pass-juken-academy2026/highschool-biology",
+    "pass-juken-academy2026/highschool-science",
     "pass-juken-academy2026/highschool-social-studies",
     "pass-juken-academy2026/highschool-information",
     "pass-juken-academy2026/learning-portal",
