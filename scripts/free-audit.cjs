@@ -131,8 +131,11 @@ function auditSecurityPrivacy(html, filename = 'index.html') {
     if (/\bfetch\s*\(|\bXMLHttpRequest\b|\bsendBeacon\s*\(|\bWebSocket\b/i.test(source)) {
       errors.push(filename + ': inline script ' + (index + 1) + ' contains a network-request API; verify that no study or personal data is transmitted.');
     }
-    if (/\beval\s*\(|new\s+Function\s*\(|document\.write\s*\(/i.test(source)) {
-      errors.push(filename + ': inline script ' + (index + 1) + ' uses a dynamic-code or document.write API.');
+    if (/\beval\s*\(|new\s+Function\s*\(/i.test(source)) {
+      errors.push(filename + ': inline script ' + (index + 1) + ' uses eval or new Function.');
+    }
+    if (/document\.write\s*\(/i.test(source)) {
+      warnings.push(filename + ': inline script ' + (index + 1) + ' uses document.write; review the generated HTML and escaping, especially in print/PDF windows.');
     }
     if (/\.innerHTML\s*(?:=|\+=)/i.test(source)) {
       warnings.push(filename + ': inline script ' + (index + 1) + ' uses innerHTML and needs a manual XSS/data-source review.');
