@@ -23,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Validate workflow YAML syntax
         run: ruby -e "require 'yaml'; YAML.parse_file('.github/workflows/gated-a-plan-maintenance.yml'); puts 'Workflow YAML syntax passed.'"
       - name: Test A-plan maintenance safety gates
@@ -58,6 +60,7 @@ jobs:
           ref: main
           token: ${{ github.token }}
           path: orchestrator
+          persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -79,6 +82,7 @@ jobs:
           token: ${{ secrets.CROSS_REPO_TOKEN }}
           path: target
           fetch-depth: 0
+          persist-credentials: false
       - name: Run gated maintenance
         id: maintenance
         if: steps.gate.outputs.enabled == 'true'
