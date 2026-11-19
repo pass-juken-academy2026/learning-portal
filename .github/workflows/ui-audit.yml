@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: 22
       - name: Install Playwright
-        run: npm install --no-save playwright
+        run: npm install --no-save --package-lock=false playwright@1.65.1
         timeout-minutes: 5
       - name: Install Chromium dependencies
         run: npx playwright install-deps chromium
