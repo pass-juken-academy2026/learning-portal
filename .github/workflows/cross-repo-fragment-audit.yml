@@ -54,6 +54,5 @@ jobs:
           repository: ${{ matrix.repository }}
           ref: main
           path: target
-          persist-credentials: false
       - name: Audit local HTML fragment links
         run: python scripts/audit_html_fragments.py --root target
