@@ -105,7 +105,7 @@ jobs:
           done
       - name: Install Playwright for PDF/export tests
         if: ${{ hashFiles('target/tests/pdf-export-audit.cjs', 'target/tests/english-mock-pdf-export.test.cjs') != '' }}
-        run: npm install --no-save playwright
+        run: npm install --no-save --package-lock=false playwright@1.65.1
         timeout-minutes: 5
       - name: Install Chromium dependencies for PDF/export tests
         if: ${{ hashFiles('target/tests/pdf-export-audit.cjs', 'target/tests/english-mock-pdf-export.test.cjs') != '' }}
