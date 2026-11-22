@@ -35,7 +35,10 @@ def audit(root: Path):
     cache = {}
     for page in pages:
         try:
-            parsed = cache.setdefault(page, parse_page(page))
+            parsed = cache.get(page)
+            if parsed is None:
+                parsed = parse_page(page)
+                cache[page] = parsed
         except (OSError, UnicodeError) as exc:
             errors.append(f"{page.relative_to(root)}: unable to parse page: {exc}")
             continue
